@@ -25,8 +25,8 @@ class PaymongoService
 
         $lineItems = $order->items->map(function ($item) {
             $name = $item->variant?->product?->prod_name ?? 'Product';
-            if ($item->variant?->variant_name) {
-                $name .= ' — ' . $item->variant->variant_name;
+            if ($item->variant?->var_name) {
+                $name .= ' — ' . $item->variant->var_name;
             }
             return [
                 'currency'    => 'PHP',
