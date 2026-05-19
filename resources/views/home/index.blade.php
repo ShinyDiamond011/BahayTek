@@ -20,10 +20,10 @@
 @keyframes kenburns4{0%{transform:scale(1) translate(0.5%,-0.5%)}100%{transform:scale(1.12) translate(-1.5%,0.5%)}}
 .slide-overlay{position:absolute;inset:0;background:linear-gradient(to right, rgba(8,22,13,.82) 0%, rgba(10,25,15,.55) 50%, rgba(8,20,12,.22) 100%)}
 .slide-overlay::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(5,15,8,.75) 0%,transparent 50%)}
-.s1 .slide-bg{background-image:url('/images/slides/slide1.jpg');background-size:cover;background-position:center}
-.s2 .slide-bg{background-image:url('/images/slides/slide2.jpg');background-size:cover;background-position:center}
-.s3 .slide-bg{background-image:url('/images/slides/slide3.jpg');background-size:cover;background-position:center}
-.s4 .slide-bg{background-image:url('/images/slides/slide4.jpg');background-size:cover;background-position:center}
+.s1 .slide-bg{background-image:url('/images/slides/1.jpg');background-size:cover;background-position:center}
+.s2 .slide-bg{background-image:url('/images/slides/2.jpg');background-size:cover;background-position:center}
+.s3 .slide-bg{background-image:url('/images/slides/3.jpg');background-size:cover;background-position:center}
+.s4 .slide-bg{background-image:url('/images/slides/4.jpg');background-size:cover;background-position:center}
 .hero-content{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;height:100%;padding:0 72px 80px;gap:48px}
 .hero-text-block{max-width:520px;flex:0 0 auto}
 .hero-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:18px}
