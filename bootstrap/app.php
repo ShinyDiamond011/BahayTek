@@ -11,6 +11,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
         $middleware->alias([
             'auth.user'  => \App\Http\Middleware\AuthenticateUser::class,
             'auth.staff' => \App\Http\Middleware\AuthenticateStaff::class,
