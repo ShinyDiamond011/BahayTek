@@ -20,10 +20,10 @@
 @keyframes kenburns4{0%{transform:scale(1) translate(0.5%,-0.5%)}100%{transform:scale(1.12) translate(-1.5%,0.5%)}}
 .slide-overlay{position:absolute;inset:0;background:linear-gradient(to right, rgba(8,22,13,.82) 0%, rgba(10,25,15,.55) 50%, rgba(8,20,12,.22) 100%)}
 .slide-overlay::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(5,15,8,.75) 0%,transparent 50%)}
-.s1 .slide-bg{background:radial-gradient(ellipse 120% 60% at 70% 30%,rgba(110,231,183,.07) 0%,transparent 60%),linear-gradient(175deg,#020d05 0%,#041a0a 18%,#072512 30%,#0e3d1c 45%,#175c28 60%,#1f7a36 75%,#268a42 88%,#2d9b4e 100%)}
-.s2 .slide-bg{background:radial-gradient(ellipse 100% 70% at 65% 45%,rgba(110,231,183,.06) 0%,transparent 55%),linear-gradient(165deg,#030f07 0%,#051a0d 15%,#092c18 28%,#0f4225 42%,#155a32 58%,#1c7040 72%,#22804a 85%,#297856 100%)}
-.s3 .slide-bg{background:radial-gradient(ellipse 70% 55% at 78% 18%,rgba(254,240,138,.11) 0%,transparent 50%),linear-gradient(158deg,#030c06 0%,#051508 14%,#082212 26%,#0d3a1c 40%,#125028 55%,#196835 68%,#1e7840 80%,#246b3c 100%)}
-.s4 .slide-bg{background:radial-gradient(ellipse 80% 50% at 40% 70%,rgba(56,189,248,.07) 0%,transparent 50%),linear-gradient(172deg,#020c07 0%,#041610 14%,#072518 28%,#0c3c24 43%,#125430 57%,#186840 70%,#1d7848 83%,#1e6b44 100%)}
+.s1 .slide-bg{background-image:url('/images/slides/slide1.jpg');background-size:cover;background-position:center}
+.s2 .slide-bg{background-image:url('/images/slides/slide2.jpg');background-size:cover;background-position:center}
+.s3 .slide-bg{background-image:url('/images/slides/slide3.jpg');background-size:cover;background-position:center}
+.s4 .slide-bg{background-image:url('/images/slides/slide4.jpg');background-size:cover;background-position:center}
 .hero-content{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;height:100%;padding:0 72px 80px;gap:48px}
 .hero-text-block{max-width:520px;flex:0 0 auto}
 .hero-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:18px}
