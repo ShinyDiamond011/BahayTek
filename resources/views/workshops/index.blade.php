@@ -150,7 +150,8 @@
       $fillPct           = $maxSlots > 0 ? min(100, round($confirmedCount / $maxSlots * 100)) : 0;
       $fillClass         = $fillPct >= 100 ? 'full' : ($fillPct >= 75 ? 'warn' : '');
       $isFull            = $slotsLeft <= 0;
-      $userStatus        = $userEnrollments[$session->id] ?? null;
+      $userStatus        = $userEnrollments[$session->id]['status'] ?? null;
+      $userRegId         = $userEnrollments[$session->id]['id'] ?? null;
       $regClosed         = $session->registration_deadline && now()->gt($session->registration_deadline);
       $badgeClass        = match($session->status) {
         'ongoing'     => 'sess-ongoing',
@@ -216,13 +217,31 @@
         @endif
 
         @if($userStatus)
-          <div class="btn-enroll enrolled">
-            @if($userStatus === 'confirmed') ✓ Enrolled
-            @elseif($userStatus === 'attended') ✓ Attended
-            @elseif($userStatus === 'cancelled') Enrollment cancelled
-            @else ⏳ Pending confirmation
-            @endif
-          </div>
+          @if(in_array($userStatus, ['pending', 'confirmed']) && $session->session_datetime->isFuture())
+            <div style="display:flex;gap:8px;align-items:stretch">
+              <div class="btn-enroll enrolled" style="flex:1;cursor:default">
+                @if($userStatus === 'confirmed') ✓ Enrolled
+                @else ⏳ Pending confirmation
+                @endif
+              </div>
+              <form method="POST" action="{{ route('workshops.cancel', $userRegId) }}"
+                onsubmit="return confirm('Cancel your enrollment for this workshop?')">
+                @csrf
+                @method('PATCH')
+                <button type="submit" style="padding:10px 14px;border-radius:10px;background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;font-size:.78rem;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;height:100%">
+                  Cancel
+                </button>
+              </form>
+            </div>
+          @else
+            <div class="btn-enroll enrolled">
+              @if($userStatus === 'confirmed') ✓ Enrolled
+              @elseif($userStatus === 'attended') ✓ Attended
+              @elseif($userStatus === 'cancelled') Enrollment cancelled
+              @else ⏳ Pending confirmation
+              @endif
+            </div>
+          @endif
         @elseif(in_array($session->status, ['cancelled', 'completed']))
           <div class="btn-enroll full">{{ ucfirst($session->status) }}</div>
         @elseif($regClosed)

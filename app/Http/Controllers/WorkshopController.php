@@ -25,13 +25,21 @@ class WorkshopController extends Controller
         }
 
         if ($showHistory) {
-            // History tab: completed/cancelled workshops
-            $baseQuery->whereIn('status', ['completed', 'cancelled'])->orderByDesc('session_datetime');
+            // History: session date has passed OR status is completed/cancelled
+            $baseQuery->where(function ($q) {
+                $q->where('session_datetime', '<', now())
+                  ->orWhereIn('status', ['completed', 'cancelled']);
+            })->orderByDesc('session_datetime');
         } elseif ($request->filled('status')) {
-            $baseQuery->where('status', $request->status)->orderBy('session_datetime');
+            $baseQuery->where('status', $request->status)
+                      ->where('session_datetime', '>=', now())
+                      ->whereNotIn('status', ['completed', 'cancelled'])
+                      ->orderBy('session_datetime');
         } else {
-            // Default: active sessions only
-            $baseQuery->whereIn('status', ['open', 'coming_soon', 'ongoing'])->orderBy('session_datetime');
+            // Active: future date AND not completed/cancelled
+            $baseQuery->where('session_datetime', '>=', now())
+                      ->whereNotIn('status', ['completed', 'cancelled'])
+                      ->orderBy('session_datetime');
         }
 
         $sessions = $baseQuery->paginate(9)->withQueryString();
@@ -39,7 +47,9 @@ class WorkshopController extends Controller
         $userEnrollments = [];
         if (Auth::check()) {
             $userEnrollments = TrainingRegistration::where('user_id', Auth::id())
-                ->pluck('registration_status', 'training_session_id')
+                ->get(['id', 'training_session_id', 'registration_status'])
+                ->keyBy('training_session_id')
+                ->map(fn($r) => ['id' => $r->id, 'status' => $r->registration_status])
                 ->all();
         }
 
