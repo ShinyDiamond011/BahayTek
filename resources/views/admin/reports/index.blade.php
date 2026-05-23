@@ -23,14 +23,27 @@
     <h1 class="page-title">Reports &amp; Analytics</h1>
     <p class="page-sub">Sales, operations, and inventory summary.</p>
   </div>
-  <div style="display:flex;gap:8px">
-    <a href="{{ route('admin.reports.export') }}?type=orders&period={{ $period }}" class="btn btn-secondary">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Export Orders CSV
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    @php
+      $dlIcon = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+    @endphp
+    <a href="{{ route('admin.reports.export') }}?type=orders&period={{ $period }}" class="btn btn-secondary" style="font-size:.77rem">
+      {!! $dlIcon !!} Orders CSV
     </a>
-    <a href="{{ route('admin.reports.export') }}?type=products" class="btn btn-secondary">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Export Products CSV
+    <a href="{{ route('admin.reports.export') }}?type=products" class="btn btn-secondary" style="font-size:.77rem">
+      {!! $dlIcon !!} Products CSV
+    </a>
+    <a href="{{ route('admin.reports.export') }}?type=workshops&period={{ $period }}" class="btn btn-secondary" style="font-size:.77rem">
+      {!! $dlIcon !!} Workshops CSV
+    </a>
+    <a href="{{ route('admin.reports.export') }}?type=orders&period={{ $period }}&format=pdf" target="_blank" class="btn btn-primary" style="font-size:.77rem;background:#1d4ed8;border-color:#1d4ed8">
+      {!! $dlIcon !!} Orders PDF
+    </a>
+    <a href="{{ route('admin.reports.export') }}?type=products&format=pdf" target="_blank" class="btn btn-primary" style="font-size:.77rem;background:#1d4ed8;border-color:#1d4ed8">
+      {!! $dlIcon !!} Products PDF
+    </a>
+    <a href="{{ route('admin.reports.export') }}?type=workshops&period={{ $period }}&format=pdf" target="_blank" class="btn btn-primary" style="font-size:.77rem;background:#1d4ed8;border-color:#1d4ed8">
+      {!! $dlIcon !!} Workshops PDF
     </a>
   </div>
 </div>

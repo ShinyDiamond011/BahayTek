@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\WorkshopController as AdminWorkshopController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\LogController;
 use App\Http\Controllers\Admin\ReportController;
 
 // ─── Public ───────────────────────────────────────────────────────────────────
@@ -41,6 +42,7 @@ Route::middleware('auth.user')->group(function () {
 // ─── Shop (E-Commerce) ────────────────────────────────────────────────────────
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 Route::get('/shop/product/{product}', [ShopController::class, 'show'])->name('shop.product');
+Route::post('/shop/product/{product}/reviews', [ShopController::class, 'storeReview'])->name('shop.product.review')->middleware('auth.user');
 // Cart — no auth needed (guests can add/view/update cart)
 Route::get('/cart',                [ShopController::class, 'cart'])->name('shop.cart');
 Route::get('/cart/data',           [ShopController::class, 'cartData'])->name('shop.cart.data');
@@ -64,8 +66,9 @@ Route::post('/webhooks/paymongo', [ShopController::class, 'handleWebhook'])->nam
 // ─── Workshops ────────────────────────────────────────────────────────────────
 Route::get('/workshops', [WorkshopController::class, 'index'])->name('workshops.index');
 Route::middleware('auth.user')->group(function () {
-    Route::post('/workshops/{session}/enroll', [WorkshopController::class, 'enroll'])->name('workshops.enroll');
-    Route::get('/workshops/my-enrollments',    [WorkshopController::class, 'myEnrollments'])->name('workshops.my-enrollments');
+    Route::post('/workshops/{session}/enroll',           [WorkshopController::class, 'enroll'])->name('workshops.enroll');
+    Route::patch('/workshops/enrollments/{registration}/cancel', [WorkshopController::class, 'cancel'])->name('workshops.cancel');
+    Route::get('/workshops/my-enrollments',              [WorkshopController::class, 'myEnrollments'])->name('workshops.my-enrollments');
 });
 
 // ─── Admin Auth ───────────────────────────────────────────────────────────────
@@ -102,6 +105,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/workshops/{session}',                                        [AdminWorkshopController::class, 'update'])->name('workshops.update');
         Route::delete('/workshops/{session}',                                     [AdminWorkshopController::class, 'destroy'])->name('workshops.destroy');
         Route::patch('/registrations/{registration}/status',                      [AdminWorkshopController::class, 'updateRegistration'])->name('registrations.status');
+        Route::get('/attendance',                                                 [AdminWorkshopController::class, 'attendance'])->name('attendance.index');
+        Route::patch('/attendance/{registration}',                                [AdminWorkshopController::class, 'markAttendance'])->name('attendance.mark');
 
         // Products & Inventory
         Route::get('/products',                           [AdminProductController::class, 'index'])->name('products.index');
@@ -119,5 +124,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Reports
         Route::get('/reports',                        [ReportController::class, 'index'])->name('reports.index');
         Route::get('/reports/export',                 [ReportController::class, 'export'])->name('reports.export');
+
+        // Logs
+        Route::get('/logs',                           [LogController::class, 'index'])->name('logs.index');
     });
 });

@@ -36,6 +36,11 @@ class Product extends Model
         return $this->hasMany(Inventory::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class);
+    }
+
     public function updateStockLevel(): void
     {
         $level = match(true) {

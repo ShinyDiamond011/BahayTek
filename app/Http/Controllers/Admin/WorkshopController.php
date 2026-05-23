@@ -39,13 +39,14 @@ class WorkshopController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title'            => 'required|string|max:255',
-            'description'      => 'nullable|string',
-            'session_datetime' => 'required|date|after:now',
-            'max_participants' => 'required|integer|min:1',
-            'venue'            => 'required|string|max:255',
-            'fee'              => 'required|numeric|min:0',
-            'status'           => 'required|in:open,coming_soon,ongoing,completed,cancelled',
+            'title'                 => 'required|string|max:255',
+            'description'           => 'nullable|string',
+            'session_datetime'      => 'required|date|after:now',
+            'registration_deadline' => 'nullable|date|before:session_datetime',
+            'max_participants'      => 'required|integer|min:1',
+            'venue'                 => 'required|string|max:255',
+            'fee'                   => 'required|numeric|min:0',
+            'status'                => 'required|in:open,coming_soon,ongoing,completed,cancelled',
         ]);
 
         $validated['created_by'] = Auth::guard('staff')->id();
@@ -69,13 +70,14 @@ class WorkshopController extends Controller
     public function update(Request $request, TrainingSession $session)
     {
         $validated = $request->validate([
-            'title'            => 'required|string|max:255',
-            'description'      => 'nullable|string',
-            'session_datetime' => 'required|date',
-            'max_participants' => 'required|integer|min:1',
-            'venue'            => 'required|string|max:255',
-            'fee'              => 'required|numeric|min:0',
-            'status'           => 'required|in:open,coming_soon,ongoing,completed,cancelled',
+            'title'                 => 'required|string|max:255',
+            'description'           => 'nullable|string',
+            'session_datetime'      => 'required|date',
+            'registration_deadline' => 'nullable|date|before:session_datetime',
+            'max_participants'      => 'required|integer|min:1',
+            'venue'                 => 'required|string|max:255',
+            'fee'                   => 'required|numeric|min:0',
+            'status'                => 'required|in:open,coming_soon,ongoing,completed,cancelled',
         ]);
 
         $session->update($validated);
@@ -89,9 +91,53 @@ class WorkshopController extends Controller
         return redirect()->route('admin.workshops.index')->with('success', 'Workshop cancelled.');
     }
 
+    public function attendance(Request $request)
+    {
+        // Sessions that are ongoing or completed — these are the ones that need attendance tracking
+        $sessionsQuery = TrainingSession::whereIn('status', ['ongoing', 'completed'])
+            ->orderByDesc('session_datetime');
+
+        if ($request->filled('session_id')) {
+            $sessionsQuery->where('id', $request->session_id);
+        }
+
+        $sessions      = TrainingSession::whereIn('status', ['ongoing', 'completed'])->orderByDesc('session_datetime')->get();
+        $selectedSession = $request->filled('session_id')
+            ? TrainingSession::find($request->session_id)
+            : $sessions->first();
+
+        $registrations = collect();
+        if ($selectedSession) {
+            $registrations = TrainingRegistration::where('training_session_id', $selectedSession->id)
+                ->whereIn('registration_status', ['confirmed', 'attended', 'cancelled'])
+                ->with('user')
+                ->orderBy('registered_at')
+                ->get();
+        }
+
+        return view('admin.workshops.attendance', compact('sessions', 'selectedSession', 'registrations'));
+    }
+
+    public function markAttendance(Request $request, TrainingRegistration $registration)
+    {
+        $request->validate(['present' => 'required|in:1,0']);
+
+        $registration->update([
+            'registration_status' => $request->present === '1' ? 'attended' : 'cancelled',
+        ]);
+
+        return back()->with('success', 'Attendance updated.');
+    }
+
     public function updateRegistration(Request $request, TrainingRegistration $registration)
     {
         $request->validate(['registration_status' => 'required|in:pending,confirmed,cancelled,attended']);
+
+        // Once confirmed, status can only move forward (confirmed → attended/cancelled), not back to pending
+        if ($registration->registration_status === 'confirmed' && $request->registration_status === 'pending') {
+            return back()->with('error', 'A confirmed enrollment cannot be reverted to pending.');
+        }
+
         $registration->update(['registration_status' => $request->registration_status]);
         return back()->with('success', 'Registration updated.');
     }

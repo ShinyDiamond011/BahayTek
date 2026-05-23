@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\BookingSchedule;
 use App\Models\Schedule;
 use Carbon\Carbon;
@@ -70,6 +71,14 @@ class ConsultationController extends Controller
         ]));
 
         $schedule->update(['status' => 'booked']);
+
+        ActivityLog::record(
+            'consultation_booked',
+            'Consultation booked for ' . $validated['first_name'] . ' ' . $validated['last_name'] . ' on ' . $schedule->date,
+            Auth::id(), null,
+            ['schedule_id' => $schedule->id, 'topic' => $validated['topic']],
+            request()->ip()
+        );
 
         return redirect()->route('consultation.my-bookings')
             ->with('success', 'Your consultation has been booked! We will confirm it within 24 hours.');

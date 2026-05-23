@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\TrainingRegistration;
 use App\Models\TrainingSession;
 use Illuminate\Http\Request;
@@ -11,23 +12,29 @@ class WorkshopController extends Controller
 {
     public function index(Request $request)
     {
-        $query = TrainingSession::withCount([
+        $showHistory = $request->boolean('history');
+
+        $baseQuery = TrainingSession::withCount([
             'registrations',
             'registrations as confirmed_registrations_count' => fn($q) => $q->where('registration_status', 'confirmed'),
-        ])->orderBy('session_datetime');
+        ]);
 
         if ($request->filled('search')) {
             $s = '%' . $request->search . '%';
-            $query->where(fn($q) => $q->where('title', 'like', $s)->orWhere('description', 'like', $s)->orWhere('venue', 'like', $s));
+            $baseQuery->where(fn($q) => $q->where('title', 'like', $s)->orWhere('description', 'like', $s)->orWhere('venue', 'like', $s));
         }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        if ($showHistory) {
+            // History tab: completed/cancelled workshops
+            $baseQuery->whereIn('status', ['completed', 'cancelled'])->orderByDesc('session_datetime');
+        } elseif ($request->filled('status')) {
+            $baseQuery->where('status', $request->status)->orderBy('session_datetime');
         } else {
-            $query->whereIn('status', ['open', 'coming_soon', 'ongoing']);
+            // Default: active sessions only
+            $baseQuery->whereIn('status', ['open', 'coming_soon', 'ongoing'])->orderBy('session_datetime');
         }
 
-        $sessions = $query->paginate(9)->withQueryString();
+        $sessions = $baseQuery->paginate(9)->withQueryString();
 
         $userEnrollments = [];
         if (Auth::check()) {
@@ -36,7 +43,7 @@ class WorkshopController extends Controller
                 ->all();
         }
 
-        return view('workshops.index', compact('sessions', 'userEnrollments'));
+        return view('workshops.index', compact('sessions', 'userEnrollments', 'showHistory'));
     }
 
     public function enroll(TrainingSession $session)
@@ -45,7 +52,10 @@ class WorkshopController extends Controller
             return redirect()->route('login')->with('error', 'Please log in to enroll.');
         }
 
-        if (!in_array($session->status, ['open', 'ongoing', 'coming_soon'])) {
+        if (!$session->isRegistrationOpen()) {
+            if ($session->registration_deadline && now()->gt($session->registration_deadline)) {
+                return back()->with('error', 'The registration period for this workshop has closed.');
+            }
             return back()->with('error', 'This session is not open for enrollment.');
         }
 
@@ -55,6 +65,18 @@ class WorkshopController extends Controller
 
         if ($existing) {
             return back()->with('error', 'You are already enrolled in this session.');
+        }
+
+        // Issue #8: Check for schedule conflict (same date/time as another confirmed enrollment)
+        $conflict = TrainingRegistration::where('user_id', Auth::id())
+            ->whereIn('registration_status', ['pending', 'confirmed'])
+            ->whereHas('trainingSession', function ($q) use ($session) {
+                $q->where('id', '!=', $session->id)
+                  ->where('session_datetime', $session->session_datetime);
+            })->first();
+
+        if ($conflict) {
+            return back()->with('error', 'You already have a workshop enrollment at the same date and time (' . $session->session_datetime->format('F j, Y g:i A') . '). Please cancel the other enrollment first.');
         }
 
         $confirmedCount = $session->registrations()->where('registration_status', 'confirmed')->count();
@@ -69,7 +91,39 @@ class WorkshopController extends Controller
             'registered_at'       => now(),
         ]);
 
+        ActivityLog::record(
+            'workshop_enrollment',
+            'User enrolled in workshop: ' . $session->title,
+            Auth::id(), null,
+            ['session_id' => $session->id],
+            request()->ip()
+        );
+
         return back()->with('success', 'Enrollment request submitted! You will be notified once confirmed.');
+    }
+
+    // Issue #7: Users can cancel their own enrollment
+    public function cancel(TrainingRegistration $registration)
+    {
+        if ($registration->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        if ($registration->registration_status === 'attended') {
+            return back()->with('error', 'You cannot cancel an enrollment that has already been marked as attended.');
+        }
+
+        $registration->update(['registration_status' => 'cancelled']);
+
+        ActivityLog::record(
+            'workshop_cancellation',
+            'User cancelled enrollment for workshop: ' . ($registration->trainingSession?->title ?? 'N/A'),
+            Auth::id(), null,
+            ['registration_id' => $registration->id],
+            request()->ip()
+        );
+
+        return back()->with('success', 'Your enrollment has been cancelled.');
     }
 
     public function myEnrollments()

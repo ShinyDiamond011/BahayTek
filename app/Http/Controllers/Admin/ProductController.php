@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -43,12 +44,21 @@ class ProductController extends Controller
             'stock_qty'        => 'required|integer|min:0',
             'category'         => 'required|string|max:100',
             'image_url'        => 'nullable|string|max:500',
+            'image_file'       => 'nullable|image|max:2048',
         ]);
 
+        if ($request->hasFile('image_file')) {
+            $validated['image_url'] = Storage::disk('public')->url(
+                $request->file('image_file')->store('products', 'public')
+            );
+        }
+
+        unset($validated['image_file']);
+
         $validated['stock_level'] = match(true) {
-            $validated['stock_qty'] === 0  => 'out_of_stock',
-            $validated['stock_qty'] <= 10  => 'low_stock',
-            default                        => 'in_stock',
+            (int)$validated['stock_qty'] === 0  => 'out_of_stock',
+            (int)$validated['stock_qty'] <= 10  => 'low_stock',
+            default                             => 'in_stock',
         };
 
         Product::create($validated);
@@ -65,8 +75,16 @@ class ProductController extends Controller
             'stock_qty'        => 'required|integer|min:0',
             'category'         => 'required|string|max:100',
             'image_url'        => 'nullable|string|max:500',
+            'image_file'       => 'nullable|image|max:2048',
             'is_active'        => 'boolean',
         ]);
+
+        if ($request->hasFile('image_file')) {
+            $validated['image_url'] = Storage::disk('public')->url(
+                $request->file('image_file')->store('products', 'public')
+            );
+        }
+        unset($validated['image_file']);
 
         $oldQty = $product->stock_qty;
         $newQty = (int) $validated['stock_qty'];

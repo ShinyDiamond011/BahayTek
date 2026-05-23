@@ -156,7 +156,7 @@ textarea.form-control{resize:vertical;min-height:70px}
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-    <form method="POST" action="{{ route('admin.products.store') }}" id="addForm">
+    <form method="POST" action="{{ route('admin.products.store') }}" id="addForm" enctype="multipart/form-data">
       @csrf
       <div class="modal-body">
         <div class="form-group">
@@ -186,9 +186,18 @@ textarea.form-control{resize:vertical;min-height:70px}
           @error('category')<div class="form-error">{{ $message }}</div>@enderror
         </div>
         <div class="form-group">
-          <label class="form-label">Image URL</label>
-          <input class="form-control" type="url" name="image_url" value="{{ old('image_url') }}"
-            placeholder="https://..." oninput="previewImg(this,'addPreview')">
+          <label class="form-label">Product Image</label>
+          <div style="display:flex;gap:6px;margin-bottom:8px">
+            <button type="button" onclick="setImgTab('add','url')" id="addTabUrl" class="btn btn-primary btn-sm" style="font-size:.72rem">URL</button>
+            <button type="button" onclick="setImgTab('add','file')" id="addTabFile" class="btn btn-secondary btn-sm" style="font-size:.72rem">Upload File</button>
+          </div>
+          <div id="addImgUrl">
+            <input class="form-control" type="url" name="image_url" value="{{ old('image_url') }}"
+              placeholder="https://..." oninput="previewImg(this,'addPreview')">
+          </div>
+          <div id="addImgFile" style="display:none">
+            <input class="form-control" type="file" name="image_file" accept="image/*" onchange="previewFile(this,'addPreview')">
+          </div>
           <img id="addPreview" class="product-img-preview">
         </div>
       </div>
@@ -209,7 +218,7 @@ textarea.form-control{resize:vertical;min-height:70px}
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-    <form method="POST" id="editForm">
+    <form method="POST" id="editForm" enctype="multipart/form-data">
       @csrf @method('PUT')
       <div class="modal-body">
         <div class="form-group">
@@ -235,9 +244,18 @@ textarea.form-control{resize:vertical;min-height:70px}
           <input class="form-control" type="text" name="category" id="edit_category" required>
         </div>
         <div class="form-group">
-          <label class="form-label">Image URL</label>
-          <input class="form-control" type="url" name="image_url" id="edit_image_url"
-            oninput="previewImg(this,'editPreview')">
+          <label class="form-label">Product Image</label>
+          <div style="display:flex;gap:6px;margin-bottom:8px">
+            <button type="button" onclick="setImgTab('edit','url')" id="editTabUrl" class="btn btn-primary btn-sm" style="font-size:.72rem">URL</button>
+            <button type="button" onclick="setImgTab('edit','file')" id="editTabFile" class="btn btn-secondary btn-sm" style="font-size:.72rem">Upload File</button>
+          </div>
+          <div id="editImgUrl">
+            <input class="form-control" type="url" name="image_url" id="edit_image_url"
+              oninput="previewImg(this,'editPreview')">
+          </div>
+          <div id="editImgFile" style="display:none">
+            <input class="form-control" type="file" name="image_file" accept="image/*" onchange="previewFile(this,'editPreview')">
+          </div>
           <img id="editPreview" class="product-img-preview">
         </div>
         <div class="form-group">
@@ -329,6 +347,34 @@ function previewImg(input, previewId){
   const img = document.getElementById(previewId);
   if(input.value){ img.src = input.value; img.style.display='block'; }
   else img.style.display='none';
+}
+
+function previewFile(input, previewId){
+  const img = document.getElementById(previewId);
+  if(input.files && input.files[0]){
+    const reader = new FileReader();
+    reader.onload = e => { img.src = e.target.result; img.style.display='block'; };
+    reader.readAsDataURL(input.files[0]);
+  } else img.style.display='none';
+}
+
+function setImgTab(prefix, tab){
+  const urlDiv  = document.getElementById(prefix+'ImgUrl');
+  const fileDiv = document.getElementById(prefix+'ImgFile');
+  const urlBtn  = document.getElementById(prefix+'TabUrl');
+  const fileBtn = document.getElementById(prefix+'TabFile');
+  if(tab === 'url'){
+    urlDiv.style.display=''; fileDiv.style.display='none';
+    urlBtn.className='btn btn-primary btn-sm'; fileBtn.className='btn btn-secondary btn-sm';
+    // clear file input so it doesn't override URL
+    fileDiv.querySelector('input[type=file]').value='';
+  } else {
+    urlDiv.style.display='none'; fileDiv.style.display='';
+    urlBtn.className='btn btn-secondary btn-sm'; fileBtn.className='btn btn-primary btn-sm';
+    // clear url input so it doesn't override file
+    urlDiv.querySelector('input[type=url]').value='';
+    document.getElementById(prefix+'Preview').style.display='none';
+  }
 }
 
 // ── Add ──

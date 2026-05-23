@@ -62,6 +62,30 @@
   .product-gallery{position:static}
   .product-hero-inner{padding:0 18px}
 }
+
+/* Reviews */
+.reviews-wrap{max-width:1120px;margin:0 auto;padding:0 40px 48px}
+.reviews-heading{font-family:'DM Serif Display',serif;font-size:1.35rem;color:var(--dark);margin-bottom:4px}
+.reviews-sub{font-size:.8rem;color:var(--gray);margin-bottom:24px}
+.review-avg{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+.stars{display:inline-flex;gap:2px}
+.star{width:17px;height:17px;fill:#f59e0b;stroke:#f59e0b;stroke-width:1}
+.star.empty{fill:none;stroke:var(--border)}
+.review-form{background:var(--sand);border-radius:14px;padding:22px 24px;margin-bottom:32px;border:1px solid var(--border)}
+.review-form-title{font-size:.83rem;font-weight:700;color:var(--dark);margin-bottom:14px}
+.star-picker{display:flex;flex-direction:row-reverse;gap:4px;margin-bottom:14px;width:fit-content}
+.star-picker input{display:none}
+.star-picker label{cursor:pointer;font-size:1.6rem;color:#d1d5db;transition:color .15s;line-height:1}
+.star-picker input:checked ~ label,
+.star-picker label:hover,
+.star-picker label:hover ~ label{color:#f59e0b}
+.review-card{border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:14px;background:#fff}
+.review-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.review-card-author{font-size:.8rem;font-weight:700;color:var(--dark)}
+.review-card-date{font-size:.72rem;color:var(--gray)}
+.review-card-title{font-size:.86rem;font-weight:600;color:var(--dark);margin-bottom:4px}
+.review-card-body{font-size:.82rem;color:var(--gray);line-height:1.6}
+@media(max-width:860px){.reviews-wrap{padding:0 18px 36px}}
 </style>
 @endpush
 
@@ -151,6 +175,88 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+{{-- ── Reviews ──────────────────────────────────────────────────────────── --}}
+<div class="reviews-wrap">
+  <h2 class="reviews-heading">Customer Reviews</h2>
+  <p class="reviews-sub">
+    @if($reviews->count())
+      {{ $reviews->count() }} review{{ $reviews->count() !== 1 ? 's' : '' }}
+      @if($avgRating)
+        &nbsp;·&nbsp;
+        <strong style="color:var(--dark)">{{ number_format($avgRating, 1) }}</strong> / 5
+      @endif
+    @else
+      No reviews yet — be the first!
+    @endif
+  </p>
+
+  @auth
+  <div class="review-form">
+    <div class="review-form-title">{{ $userReview ? 'Edit your review' : 'Write a review' }}</div>
+    @if(session('success'))
+      <div class="alert alert-success" style="margin-bottom:12px;padding:10px 14px;border-radius:8px;background:#dcfce7;color:#166534;font-size:.8rem">{{ session('success') }}</div>
+    @endif
+    <form method="POST" action="{{ route('shop.product.review', $product) }}">
+      @csrf
+      {{-- Star picker (RTL trick: 5 4 3 2 1 reversed so CSS :checked ~ label works) --}}
+      <div style="font-size:.73rem;font-weight:700;color:var(--dark);margin-bottom:8px">Rating</div>
+      <div class="star-picker" id="starPicker">
+        @foreach([5,4,3,2,1] as $s)
+          <input type="radio" name="rating" id="star{{ $s }}" value="{{ $s }}"
+            {{ ($userReview?->rating ?? 5) == $s ? 'checked' : '' }}>
+          <label for="star{{ $s }}" title="{{ $s }} star{{ $s !== 1 ? 's' : '' }}">&#9733;</label>
+        @endforeach
+      </div>
+      @error('rating')<div style="font-size:.72rem;color:#dc2626;margin-bottom:8px">{{ $message }}</div>@enderror
+
+      <div style="margin-bottom:12px">
+        <div style="font-size:.73rem;font-weight:700;color:var(--dark);margin-bottom:5px">Title <span style="font-weight:400;color:var(--gray)">(optional)</span></div>
+        <input class="form-input" type="text" name="title" maxlength="150" placeholder="Summary of your experience"
+          value="{{ old('title', $userReview?->title) }}" style="width:100%;max-width:420px">
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div style="font-size:.73rem;font-weight:700;color:var(--dark);margin-bottom:5px">Review <span style="font-weight:400;color:var(--gray)">(optional)</span></div>
+        <textarea class="form-input" name="body" rows="4" maxlength="2000" placeholder="Share your thoughts..."
+          style="width:100%;resize:vertical">{{ old('body', $userReview?->body) }}</textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="height:38px">
+        {{ $userReview ? 'Update Review' : 'Submit Review' }}
+      </button>
+    </form>
+  </div>
+  @else
+  <div style="background:var(--sand);border-radius:12px;padding:18px 22px;margin-bottom:24px;font-size:.83rem;color:var(--gray);border:1px solid var(--border)">
+    <a href="{{ route('login') }}" style="color:var(--forest);font-weight:700">Log in</a> to leave a review.
+  </div>
+  @endauth
+
+  @forelse($reviews as $review)
+  <div class="review-card">
+    <div class="review-card-header">
+      <div>
+        <span class="review-card-author">{{ $review->user->first_name }} {{ $review->user->last_name }}</span>
+        <span class="stars" style="margin-left:8px">
+          @for($i = 1; $i <= 5; $i++)
+            <svg class="star {{ $i <= $review->rating ? '' : 'empty' }}" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          @endfor
+        </span>
+      </div>
+      <span class="review-card-date">{{ $review->created_at->format('M j, Y') }}</span>
+    </div>
+    @if($review->title)
+      <div class="review-card-title">{{ $review->title }}</div>
+    @endif
+    @if($review->body)
+      <div class="review-card-body">{{ $review->body }}</div>
+    @endif
+  </div>
+  @empty
+  <div style="text-align:center;padding:32px 0;color:var(--gray);font-size:.85rem">No reviews yet.</div>
+  @endforelse
+</div>
 
 @php $variants_data = $product->variants->map(fn($v) => [
   'id' => $v->id,

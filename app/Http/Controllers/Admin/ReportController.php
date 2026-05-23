@@ -87,27 +87,42 @@ class ReportController extends Controller
         $type   = $request->get('type', 'orders');
         $period = $request->get('period', '30');
         $from   = now()->subDays((int) $period)->startOfDay();
+        $fmt    = $request->get('format', 'csv');
 
-        $filename = "{$type}-report-" . now()->format('Y-m-d') . '.csv';
+        // PDF: render a printable HTML page
+        if ($fmt === 'pdf') {
+            return $this->exportPdf($type, $period, $from);
+        }
+
+        $filename = "bahaytek-{$type}-report-" . now()->format('Y-m-d') . '.csv';
 
         $headers = [
-            'Content-Type'        => 'text/csv',
+            'Content-Type'        => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
+        $generatedAt = now()->format('Y-m-d H:i:s');
+        $periodLabel = "Last {$period} days (from {$from->format('Y-m-d')} to " . now()->format('Y-m-d') . ")";
+
         $callback = match($type) {
-            'orders' => function() use ($from) {
+            'orders' => function() use ($from, $generatedAt, $periodLabel) {
                 $out = fopen('php://output', 'w');
-                fputcsv($out, ['Order ID','Customer','Email','Status','Payment','Method','Total','Date']);
+                // Title block
+                fputcsv($out, ['BAHAYTEK — Orders Report']);
+                fputcsv($out, ['Generated:', $generatedAt]);
+                fputcsv($out, ['Period:', $periodLabel]);
+                fputcsv($out, []);
+                // Column headers
+                fputcsv($out, ['Order ID','Customer','Email','Order Status','Payment Status','Payment Method','Total (PHP)','Order Date']);
                 Order::with('user')->where('ordered_at', '>=', $from)->orderBy('ordered_at')->chunk(200, function($orders) use ($out) {
                     foreach ($orders as $o) {
                         fputcsv($out, [
-                            str_pad($o->id, 5, '0', STR_PAD_LEFT),
-                            ($o->user?->first_name . ' ' . $o->user?->last_name),
-                            $o->user?->email,
-                            $o->status,
-                            $o->payment_status,
-                            $o->payment_method,
+                            '#' . str_pad($o->id, 5, '0', STR_PAD_LEFT),
+                            trim(($o->user?->first_name ?? '') . ' ' . ($o->user?->last_name ?? '')),
+                            $o->user?->email ?? '—',
+                            ucfirst($o->status),
+                            ucfirst($o->payment_status),
+                            strtoupper($o->payment_method ?? '—'),
                             number_format($o->total_amount, 2),
                             $o->ordered_at->format('Y-m-d H:i'),
                         ]);
@@ -115,38 +130,133 @@ class ReportController extends Controller
                 });
                 fclose($out);
             },
-            'products' => function() {
+            'products' => function() use ($generatedAt) {
                 $out = fopen('php://output', 'w');
-                fputcsv($out, ['ID','Name','Category','Price','Stock Qty','Stock Level','Active']);
+                fputcsv($out, ['BAHAYTEK — Products Report']);
+                fputcsv($out, ['Generated:', $generatedAt]);
+                fputcsv($out, []);
+                fputcsv($out, ['Product ID','Product Name','Category','Price (PHP)','Stock Qty','Stock Level','Active']);
                 Product::orderBy('prod_name')->chunk(200, function($products) use ($out) {
                     foreach ($products as $p) {
                         fputcsv($out, [
-                            $p->id, $p->prod_name, $p->category,
+                            $p->id,
+                            $p->prod_name,
+                            $p->category,
                             number_format($p->price, 2),
-                            $p->stock_qty, $p->stock_level,
+                            $p->stock_qty,
+                            ucwords(str_replace('_', ' ', $p->stock_level)),
                             $p->is_active ? 'Yes' : 'No',
                         ]);
                     }
                 });
                 fclose($out);
             },
-            'users' => function() use ($from) {
+            'users' => function() use ($from, $generatedAt, $periodLabel) {
                 $out = fopen('php://output', 'w');
-                fputcsv($out, ['ID','First Name','Last Name','Email','Phone','Registered']);
+                fputcsv($out, ['BAHAYTEK — Users Report']);
+                fputcsv($out, ['Generated:', $generatedAt]);
+                fputcsv($out, ['Period:', $periodLabel]);
+                fputcsv($out, []);
+                fputcsv($out, ['User ID','First Name','Last Name','Email','Phone','Registration Date']);
                 User::where('created_at', '>=', $from)->orderBy('created_at')->chunk(200, function($users) use ($out) {
                     foreach ($users as $u) {
                         fputcsv($out, [
-                            $u->id, $u->first_name, $u->last_name,
-                            $u->email, $u->phone,
+                            $u->id,
+                            $u->first_name,
+                            $u->last_name,
+                            $u->email,
+                            $u->phone ?? '—',
                             $u->created_at->format('Y-m-d'),
                         ]);
                     }
                 });
                 fclose($out);
             },
-            default => function() { echo "No data"; },
+            'workshops' => function() use ($from, $generatedAt, $periodLabel) {
+                $out = fopen('php://output', 'w');
+                fputcsv($out, ['BAHAYTEK — Workshop Enrollments Report']);
+                fputcsv($out, ['Generated:', $generatedAt]);
+                fputcsv($out, ['Period:', $periodLabel]);
+                fputcsv($out, []);
+                fputcsv($out, ['Registration ID','Workshop Title','Session Date','Venue','Fee (PHP)','Participant Name','Email','Status','Registered At']);
+                TrainingRegistration::with(['user','trainingSession'])
+                    ->where('registered_at', '>=', $from)
+                    ->orderBy('registered_at')
+                    ->chunk(200, function($regs) use ($out) {
+                        foreach ($regs as $r) {
+                            fputcsv($out, [
+                                $r->id,
+                                $r->trainingSession?->title ?? '—',
+                                $r->trainingSession?->session_datetime?->format('Y-m-d H:i') ?? '—',
+                                $r->trainingSession?->venue ?? '—',
+                                number_format((float)($r->trainingSession?->fee ?? 0), 2),
+                                trim(($r->user?->first_name ?? '') . ' ' . ($r->user?->last_name ?? '')),
+                                $r->user?->email ?? '—',
+                                ucfirst($r->registration_status),
+                                $r->registered_at?->format('Y-m-d H:i') ?? '—',
+                            ]);
+                        }
+                    });
+                fclose($out);
+            },
+            default => function() { echo 'No data'; },
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    private function exportPdf(string $type, string $period, $from)
+    {
+        $generatedAt  = now()->format('F j, Y g:i A');
+        $periodLabel  = "Last {$period} days";
+
+        $rows    = collect();
+        $columns = [];
+        $title   = 'Report';
+
+        if ($type === 'orders') {
+            $title   = 'Orders Report';
+            $columns = ['Order ID','Customer','Email','Order Status','Payment','Total (PHP)','Date'];
+            $rows    = Order::with('user')->where('ordered_at', '>=', $from)->orderBy('ordered_at')->get()->map(fn($o) => [
+                '#' . str_pad($o->id, 5, '0', STR_PAD_LEFT),
+                trim(($o->user?->first_name ?? '') . ' ' . ($o->user?->last_name ?? '')),
+                $o->user?->email ?? '—',
+                ucfirst($o->status),
+                ucfirst($o->payment_status),
+                '₱' . number_format($o->total_amount, 2),
+                $o->ordered_at->format('M j, Y'),
+            ]);
+        } elseif ($type === 'products') {
+            $title   = 'Products Report';
+            $columns = ['ID','Product Name','Category','Price (PHP)','Stock Qty','Stock Level','Active'];
+            $rows    = Product::orderBy('prod_name')->get()->map(fn($p) => [
+                $p->id, $p->prod_name, $p->category,
+                '₱' . number_format($p->price, 2),
+                $p->stock_qty,
+                ucwords(str_replace('_', ' ', $p->stock_level)),
+                $p->is_active ? 'Yes' : 'No',
+            ]);
+        } elseif ($type === 'users') {
+            $title   = 'Users Report';
+            $columns = ['ID','First Name','Last Name','Email','Phone','Registered'];
+            $rows    = User::where('created_at', '>=', $from)->orderBy('created_at')->get()->map(fn($u) => [
+                $u->id, $u->first_name, $u->last_name, $u->email, $u->phone ?? '—',
+                $u->created_at->format('M j, Y'),
+            ]);
+        } elseif ($type === 'workshops') {
+            $title   = 'Workshop Enrollments Report';
+            $columns = ['Workshop','Session Date','Participant','Email','Status','Registered At'];
+            $rows    = TrainingRegistration::with(['user','trainingSession'])
+                ->where('registered_at', '>=', $from)->orderBy('registered_at')->get()->map(fn($r) => [
+                    $r->trainingSession?->title ?? '—',
+                    $r->trainingSession?->session_datetime?->format('M j, Y g:i A') ?? '—',
+                    trim(($r->user?->first_name ?? '') . ' ' . ($r->user?->last_name ?? '')),
+                    $r->user?->email ?? '—',
+                    ucfirst($r->registration_status),
+                    $r->registered_at?->format('M j, Y') ?? '—',
+                ]);
+        }
+
+        return view('admin.reports.pdf', compact('title','periodLabel','generatedAt','columns','rows'));
     }
 }

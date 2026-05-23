@@ -76,6 +76,12 @@
           </div>
         </div>
         <div style="margin-bottom:14px">
+          <label style="font-size:.73rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">Registration Deadline <span style="font-weight:400;color:var(--gray)">(optional)</span></label>
+          <input class="form-control" type="datetime-local" name="registration_deadline"
+            value="{{ $session->registration_deadline?->format('Y-m-d\TH:i') }}">
+          <div style="font-size:.68rem;color:var(--gray);margin-top:3px">Leave blank for no deadline. Must be before the session date.</div>
+        </div>
+        <div style="margin-bottom:14px">
           <label style="font-size:.73rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">Venue</label>
           <input class="form-control" type="text" name="venue" value="{{ $session->venue }}" required>
         </div>
@@ -131,14 +137,28 @@
               <td style="font-size:.75rem;color:var(--gray)">{{ $reg->registered_at?->format('M j, Y') }}</td>
               <td><span class="badge {{ $rc }}">{{ ucfirst($reg->registration_status) }}</span></td>
               <td>
-                <form method="POST" action="{{ route('admin.registrations.status', $reg) }}" style="display:inline-flex;gap:4px">
-                  @csrf @method('PATCH')
-                  <select name="registration_status" class="form-control form-select" style="padding:4px 8px;font-size:.73rem;width:auto;height:auto" onchange="this.form.submit()">
-                    @foreach(['pending','confirmed','cancelled','attended'] as $rs)
-                    <option value="{{ $rs }}" {{ $reg->registration_status === $rs ? 'selected' : '' }}>{{ ucfirst($rs) }}</option>
-                    @endforeach
-                  </select>
-                </form>
+                @if($reg->registration_status === 'confirmed')
+                  {{-- Confirmed: can only move to attended or cancelled, cannot revert to pending --}}
+                  <form method="POST" action="{{ route('admin.registrations.status', $reg) }}" style="display:inline-flex;gap:4px">
+                    @csrf @method('PATCH')
+                    <select name="registration_status" class="form-control form-select" style="padding:4px 8px;font-size:.73rem;width:auto;height:auto" onchange="this.form.submit()">
+                      <option value="confirmed" selected>Confirmed</option>
+                      <option value="attended">Attended</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </form>
+                @elseif(in_array($reg->registration_status, ['attended', 'cancelled']))
+                  <span class="badge {{ $rc }}" style="font-size:.68rem">{{ ucfirst($reg->registration_status) }}</span>
+                @else
+                  <form method="POST" action="{{ route('admin.registrations.status', $reg) }}" style="display:inline-flex;gap:4px">
+                    @csrf @method('PATCH')
+                    <select name="registration_status" class="form-control form-select" style="padding:4px 8px;font-size:.73rem;width:auto;height:auto" onchange="this.form.submit()">
+                      <option value="pending" {{ $reg->registration_status === 'pending' ? 'selected' : '' }}>Pending</option>
+                      <option value="confirmed" {{ $reg->registration_status === 'confirmed' ? 'selected' : '' }}>Confirmed</option>
+                      <option value="cancelled" {{ $reg->registration_status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                    </select>
+                  </form>
+                @endif
               </td>
             </tr>
             @empty

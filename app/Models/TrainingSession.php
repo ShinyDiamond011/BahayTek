@@ -12,6 +12,7 @@ class TrainingSession extends Model
         'title',
         'description',
         'session_datetime',
+        'registration_deadline',
         'max_participants',
         'venue',
         'status',
@@ -20,10 +21,19 @@ class TrainingSession extends Model
     ];
 
     protected $casts = [
-        'session_datetime' => 'datetime',
-        'fee'              => 'decimal:2',
-        'max_participants' => 'integer',
+        'session_datetime'      => 'datetime',
+        'registration_deadline' => 'datetime',
+        'fee'                   => 'decimal:2',
+        'max_participants'      => 'integer',
     ];
+
+    public function isRegistrationOpen(): bool
+    {
+        if ($this->registration_deadline && now()->gt($this->registration_deadline)) {
+            return false;
+        }
+        return in_array($this->status, ['open', 'ongoing', 'coming_soon']);
+    }
 
     public function creator(): BelongsTo
     {

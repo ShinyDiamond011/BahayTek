@@ -82,7 +82,17 @@
         </div>
       </div>
     </div>
-    <span class="badge {{ $statusClass }}">{{ ucfirst($reg->registration_status) }}</span>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+      <span class="badge {{ $statusClass }}">{{ ucfirst($reg->registration_status) }}</span>
+      @if(in_array($reg->registration_status, ['pending', 'confirmed']) && $reg->trainingSession && $reg->trainingSession->session_datetime->isFuture())
+        <form method="POST" action="{{ route('workshops.cancel', $reg) }}" onsubmit="return confirm('Cancel your enrollment for this workshop?')">
+          @csrf @method('PATCH')
+          <button type="submit" style="background:none;border:1px solid #fca5a5;color:#dc2626;font-size:.72rem;font-weight:600;padding:4px 12px;border-radius:6px;cursor:pointer;font-family:inherit;transition:all .2s" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='none'">
+            Cancel Enrollment
+          </button>
+        </form>
+      @endif
+    </div>
   </div>
   @endforeach
 

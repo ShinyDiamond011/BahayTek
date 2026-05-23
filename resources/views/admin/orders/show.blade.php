@@ -120,8 +120,8 @@
   <div>
     <div class="card">
       <div style="padding:15px 20px;border-bottom:1px solid var(--border);font-size:.85rem;font-weight:700;color:var(--dark)">Update Order</div>
-      <form method="POST" action="{{ route('admin.orders.updateStatus', $order) }}" style="padding:18px 20px">
-        @csrf @method('PUT')
+      <form method="POST" action="{{ route('admin.orders.status', $order) }}" style="padding:18px 20px">
+        @csrf @method('PATCH')
         <div style="margin-bottom:14px">
           <div style="font-size:.73rem;font-weight:700;color:var(--dark);margin-bottom:6px">Order Status</div>
           <select class="form-control form-select" name="status" style="width:100%">

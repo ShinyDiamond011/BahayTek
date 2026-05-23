@@ -105,14 +105,28 @@ class BookingController extends Controller
         $count = (int) $validated['slots'];
         unset($validated['slots']);
 
-        for ($i = 0; $i < $count; $i++) {
+        // Count how many identical slots already exist to avoid unbounded duplicates
+        $existing = Schedule::where('date', $validated['date'])
+            ->where('start_time', $validated['start_time'])
+            ->where('end_time', $validated['end_time'])
+            ->where('type', $validated['type'])
+            ->count();
+
+        // Only create slots up to the requested count minus any that already exist
+        $toCreate = max(0, $count - $existing);
+
+        if ($toCreate === 0) {
+            return back()->with('error', 'Identical slot(s) for this date and time already exist. No new slots were created.');
+        }
+
+        for ($i = 0; $i < $toCreate; $i++) {
             Schedule::create(array_merge($validated, [
                 'status'     => 'available',
                 'created_by' => Auth::guard('staff')->id(),
             ]));
         }
 
-        return back()->with('success', $count . ' slot(s) created successfully.');
+        return back()->with('success', $toCreate . ' slot(s) created successfully.');
     }
 
     public function deleteSlot(Schedule $schedule)

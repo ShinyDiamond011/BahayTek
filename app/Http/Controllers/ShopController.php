@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ProductReview;
 use App\Models\ProductVariant;
 use App\Services\PaymongoService;
 use Illuminate\Http\Request;
@@ -59,8 +61,39 @@ class ShopController extends Controller
     {
         abort_if(!$product->is_active, 404);
         $product->load('variants');
+        $reviews   = ProductReview::with('user')->where('product_id', $product->id)->latest()->get();
+        $userReview = Auth::check()
+            ? $reviews->firstWhere('user_id', Auth::id())
+            : null;
+        $avgRating = $reviews->avg('rating');
         $cartCount = array_sum(session('cart', []));
-        return view('shop.show', compact('product', 'cartCount'));
+        return view('shop.show', compact('product', 'cartCount', 'reviews', 'userReview', 'avgRating'));
+    }
+
+    public function storeReview(Request $request, Product $product)
+    {
+        abort_if(!$product->is_active, 404);
+
+        $validated = $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'title'  => 'nullable|string|max:150',
+            'body'   => 'nullable|string|max:2000',
+        ]);
+
+        ProductReview::updateOrCreate(
+            ['product_id' => $product->id, 'user_id' => Auth::id()],
+            $validated
+        );
+
+        ActivityLog::record(
+            'product_reviewed',
+            Auth::user()->first_name . ' ' . Auth::user()->last_name . ' reviewed "' . $product->prod_name . '"',
+            Auth::id(), null,
+            ['product_id' => $product->id, 'rating' => $validated['rating']],
+            $request->ip()
+        );
+
+        return back()->with('success', 'Your review has been saved.');
     }
 
     // ── Cart (session-based) ──────────────────────────────────────────────────
@@ -225,6 +258,14 @@ class ShopController extends Controller
             session()->forget('cart');
             return $order;
         });
+
+        ActivityLog::record(
+            'order_placed',
+            'Order placed: #' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . ' (₱' . number_format($order->total_amount, 2) . ')',
+            Auth::id(), null,
+            ['order_id' => $order->id, 'total' => (float) $order->total_amount, 'method' => $order->payment_method],
+            request()->ip()
+        );
 
         $orderNumber = '#' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
 

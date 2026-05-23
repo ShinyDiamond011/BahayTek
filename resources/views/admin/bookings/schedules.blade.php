@@ -3,6 +3,12 @@
 @section('page-title','Consultation Schedule Slots')
 
 @section('content')
+@if(session('success'))
+<div class="alert alert-success">{{ session('success') }}</div>
+@endif
+@if(session('error'))
+<div class="alert alert-error">{{ session('error') }}</div>
+@endif
 <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start">
 
   <!-- SLOT LIST -->
@@ -130,7 +136,8 @@
             <div style="font-size:.7rem;color:var(--gray);margin-top:4px">Creates multiple identical slots at the same time block.</div>
           </div>
 
-          <button type="submit" class="btn btn-primary" style="width:100%">
+          <button type="submit" class="btn btn-primary" style="width:100%" id="createSlotBtn"
+            onclick="this.disabled=true; this.textContent='Creating…'; this.form.submit();">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Create Slot(s)
           </button>

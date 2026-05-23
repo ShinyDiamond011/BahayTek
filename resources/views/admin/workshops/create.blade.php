@@ -43,6 +43,13 @@
       </div>
 
       <div style="margin-bottom:16px">
+        <label style="font-size:.75rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">Registration Deadline <span style="font-weight:400;color:var(--gray)">(optional)</span></label>
+        <input class="form-control @error('registration_deadline') error @enderror" type="datetime-local" name="registration_deadline" value="{{ old('registration_deadline') }}">
+        <div style="font-size:.68rem;color:var(--gray);margin-top:3px">After this date/time, users will no longer be able to register. Leave blank for no deadline.</div>
+        @error('registration_deadline')<div style="font-size:.7rem;color:#dc2626;margin-top:3px">{{ $message }}</div>@enderror
+      </div>
+
+      <div style="margin-bottom:16px">
         <label style="font-size:.75rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">Venue *</label>
         <input class="form-control @error('venue') error @enderror" type="text" name="venue" value="{{ old('venue') }}" required placeholder="e.g., BAHAYTEK Training Center, Legazpi City">
         @error('venue')<div style="font-size:.7rem;color:#dc2626;margin-top:3px">{{ $message }}</div>@enderror
