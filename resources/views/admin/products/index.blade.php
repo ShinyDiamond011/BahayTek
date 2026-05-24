@@ -10,8 +10,9 @@
 .modal-title{font-size:.95rem;font-weight:700;color:var(--dark)}
 .modal-close{background:none;border:none;cursor:pointer;color:var(--gray);padding:4px;display:flex}
 .modal-close:hover{color:var(--dark)}
-.modal-body{padding:24px;overflow-y:auto}
+.modal-body{padding:24px;overflow-y:auto;flex:1;min-height:0}
 .modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;flex-shrink:0}
+.modal-form{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
 
 .form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
 .form-label{font-size:.75rem;font-weight:700;color:var(--dark);letter-spacing:.3px}
@@ -162,7 +163,7 @@ textarea.form-control{resize:vertical;min-height:70px}
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-    <form method="POST" action="{{ route('admin.products.store') }}" id="addForm" enctype="multipart/form-data">
+    <form method="POST" action="{{ route('admin.products.store') }}" id="addForm" enctype="multipart/form-data" class="modal-form">
       @csrf
       <div class="modal-body">
         <div class="form-group">
@@ -225,7 +226,7 @@ textarea.form-control{resize:vertical;min-height:70px}
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-    <form method="POST" id="editForm" enctype="multipart/form-data">
+    <form method="POST" id="editForm" enctype="multipart/form-data" class="modal-form">
       @csrf @method('PUT')
       <div class="modal-body">
         <div class="form-group">
