@@ -222,16 +222,20 @@
     <div class="product-grid">
       @forelse($products as $product)
       <div class="product-card">
-        @if($product->image_url)
-          <img class="product-img" src="{{ $product->image_url }}" alt="{{ $product->prod_name }}" loading="lazy">
-        @else
-          <div class="product-img-placeholder">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
-          </div>
-        @endif
+        <a href="{{ route('shop.product', $product) }}" style="display:block;text-decoration:none">
+          @if($product->image_url)
+            <img class="product-img" src="{{ $product->image_url }}" alt="{{ $product->prod_name }}" loading="lazy">
+          @else
+            <div class="product-img-placeholder">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+            </div>
+          @endif
+        </a>
         <div class="product-body">
           <div class="product-cat">{{ $product->category }}</div>
-          <div class="product-name">{{ $product->prod_name }}</div>
+          <a href="{{ route('shop.product', $product) }}" style="text-decoration:none">
+            <div class="product-name" style="color:var(--dark)">{{ $product->prod_name }}</div>
+          </a>
           <div class="product-desc">{{ $product->prod_description }}</div>
           <div class="product-footer">
             <div>
@@ -241,6 +245,7 @@
               </span>
             </div>
             <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
+              <a href="{{ route('shop.product', $product) }}" class="btn-detail">View</a>
               @if($product->variants->isNotEmpty())
                 <button class="btn-add" onclick="openProductModal({{ $product->id }})"
                   {{ $product->stock_level === 'out_of_stock' ? 'disabled' : '' }}>
