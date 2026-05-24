@@ -77,6 +77,7 @@
 .btn-book:hover{background:var(--green)}
 
 /* SIDEBAR */
+.booking-sidebar{align-self:stretch}
 .summary-card{background:linear-gradient(160deg,#1a2e12 0%,#2d5020 60%,#336a29 100%);border-radius:16px;padding:22px;color:#fff;position:sticky;top:82px}
 .sum-title{font-family:'DM Serif Display',serif;font-size:.95rem;color:#fff;margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .sum-title::after{content:'';flex:1;height:1px;background:rgba(193,217,92,.2)}
