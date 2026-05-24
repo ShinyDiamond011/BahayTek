@@ -28,10 +28,15 @@ tbody td{padding:7px 10px;color:#2e4a1e}
 </head>
 <body>
 
-<div class="no-print" style="background:#336a29;color:#fff;padding:10px 16px;border-radius:8px;margin-bottom:20px;display:flex;gap:12px;align-items:center">
-  <strong style="font-size:12px">Ready to print / save as PDF</strong>
-  <button onclick="window.print()" style="background:#c1d95c;color:#1a2e12;border:none;padding:6px 18px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer">Print / Save as PDF</button>
-  <button onclick="window.close()" style="background:rgba(255,255,255,.15);color:#fff;border:none;padding:6px 18px;border-radius:6px;font-weight:600;font-size:12px;cursor:pointer">Close</button>
+<div class="no-print" style="background:#336a29;color:#fff;padding:12px 16px;border-radius:8px;margin-bottom:20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+  <div style="flex:1;min-width:200px">
+    <strong style="font-size:12px;display:block;margin-bottom:2px">Download as PDF</strong>
+    <span style="font-size:10.5px;opacity:.8">When the print dialog opens, set <em>Destination</em> to <strong>Save as PDF</strong>, then click Save.</span>
+  </div>
+  <button onclick="window.print()" style="background:#c1d95c;color:#1a2e12;border:none;padding:7px 20px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap">
+    ⬇ Download / Print
+  </button>
+  <button onclick="window.close()" style="background:rgba(255,255,255,.15);color:#fff;border:none;padding:7px 18px;border-radius:6px;font-weight:600;font-size:12px;cursor:pointer">Close</button>
 </div>
 
 <div class="report-header">
@@ -75,8 +80,7 @@ tbody td{padding:7px 10px;color:#2e4a1e}
 </div>
 
 <script class="no-print">
-// Auto-open print dialog when loaded in a new tab
-window.onload = function(){ /* user clicks the button above */ };
+window.onload = function(){ window.print(); };
 </script>
 </body>
 </html>

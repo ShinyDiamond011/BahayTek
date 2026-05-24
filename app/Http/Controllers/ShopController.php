@@ -20,7 +20,7 @@ class ShopController extends Controller
 
     public function index(Request $request)
     {
-        $query = Product::with('variants')->where('is_active', true);
+        $query = Product::with('variants')->where('is_active', true)->has('variants');
 
         if ($request->filled('search')) {
             $s = '%' . $request->search . '%';
@@ -61,6 +61,7 @@ class ShopController extends Controller
     {
         abort_if(!$product->is_active, 404);
         $product->load('variants');
+        abort_if($product->variants->isEmpty(), 404);
         $reviews   = ProductReview::with('user')->where('product_id', $product->id)->latest()->get();
         $userReview = Auth::check()
             ? $reviews->firstWhere('user_id', Auth::id())

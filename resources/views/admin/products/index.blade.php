@@ -117,7 +117,13 @@ textarea.form-control{resize:vertical;min-height:70px}
               {{ str_replace('_',' ',ucwords($product->stock_level,'_')) }}
             </span>
           </td>
-          <td style="color:var(--gray);font-size:.82rem">{{ $product->variants_count }}</td>
+          <td>
+            @if($product->variants_count === 0)
+              <span class="badge badge-danger" title="No variants — product is hidden from shop">⚠ No variants</span>
+            @else
+              <span style="font-size:.82rem;color:var(--gray)">{{ $product->variants_count }}</span>
+            @endif
+          </td>
           <td>
             <span class="badge {{ $product->is_active ? 'badge-success' : 'badge-secondary' }}">
               {{ $product->is_active ? 'Active' : 'Inactive' }}
