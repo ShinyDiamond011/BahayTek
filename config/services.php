@@ -52,5 +52,9 @@ return [
     'sender_name' => env('SEMAPHORE_SENDER_NAME', 'BAHAYTEK'),
 ],
 
+'cloudinary' => [
+    'cloud_name'    => env('CLOUDINARY_CLOUD_NAME'),
+    'upload_preset' => env('CLOUDINARY_UPLOAD_PRESET'),
+],
 
 ];

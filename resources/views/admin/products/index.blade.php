@@ -203,6 +203,7 @@ textarea.form-control{resize:vertical;min-height:70px}
           </div>
           <div id="addImgFile" style="display:none">
             <input class="form-control" type="file" name="image_file" accept="image/*" onchange="previewFile(this,'addPreview')">
+            <div style="font-size:.68rem;color:#5a7248;margin-top:5px">Max 4 MB. Uploaded to Cloudinary for permanent hosting.</div>
           </div>
           <img id="addPreview" class="product-img-preview">
         </div>
@@ -261,6 +262,7 @@ textarea.form-control{resize:vertical;min-height:70px}
           </div>
           <div id="editImgFile" style="display:none">
             <input class="form-control" type="file" name="image_file" accept="image/*" onchange="previewFile(this,'editPreview')">
+            <div style="font-size:.68rem;color:#5a7248;margin-top:5px">Max 4 MB. Uploaded to Cloudinary for permanent hosting.</div>
           </div>
           <img id="editPreview" class="product-img-preview">
         </div>

@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
@@ -44,13 +45,11 @@ class ProductController extends Controller
             'stock_qty'        => 'required|integer|min:0',
             'category'         => 'required|string|max:100',
             'image_url'        => 'nullable|string|max:500',
-            'image_file'       => 'nullable|image|max:2048',
+            'image_file'       => 'nullable|image|max:4096',
         ]);
 
         if ($request->hasFile('image_file')) {
-            $validated['image_url'] = Storage::disk('public')->url(
-                $request->file('image_file')->store('products', 'public')
-            );
+            $validated['image_url'] = $this->uploadImage($request->file('image_file'));
         }
 
         unset($validated['image_file']);
@@ -80,9 +79,7 @@ class ProductController extends Controller
         ]);
 
         if ($request->hasFile('image_file')) {
-            $validated['image_url'] = Storage::disk('public')->url(
-                $request->file('image_file')->store('products', 'public')
-            );
+            $validated['image_url'] = $this->uploadImage($request->file('image_file'));
         }
         unset($validated['image_file']);
 
@@ -143,5 +140,33 @@ class ProductController extends Controller
     {
         $variant->delete();
         return back()->with('success', 'Variant removed.');
+    }
+
+    // ── Image Upload ──────────────────────────────────────────────────────────
+
+    private function uploadImage(\Illuminate\Http\UploadedFile $file): string
+    {
+        $cloudName = config('services.cloudinary.cloud_name');
+        $preset    = config('services.cloudinary.upload_preset');
+
+        if ($cloudName && $preset) {
+            $response = Http::attach(
+                'file',
+                file_get_contents($file->getRealPath()),
+                $file->getClientOriginalName()
+            )->post("https://api.cloudinary.com/v1_1/{$cloudName}/image/upload", [
+                'upload_preset' => $preset,
+                'folder'        => 'bahaytek/products',
+            ]);
+
+            if ($response->successful() && $response->json('secure_url')) {
+                return $response->json('secure_url');
+            }
+        }
+
+        // Fallback: local storage (for local development)
+        return Storage::disk('public')->url(
+            $file->store('products', 'public')
+        );
     }
 }
