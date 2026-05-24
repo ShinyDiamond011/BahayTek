@@ -56,7 +56,7 @@
 .empty-state{text-align:center;padding:64px 24px}
 .empty-icon{width:72px;height:72px;border-radius:50%;background:var(--sand);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
 
-@media(max-width:900px){.session-grid{grid-template-columns:repeat(2,1fr)}.workshops-wrap{padding:28px 18px}.page-hero-inner{padding:0 18px}}
+@media(max-width:900px){.session-grid{grid-template-columns:repeat(2,1fr)}.workshops-wrap{padding:28px 18px}.page-hero-inner{padding:0 18px}.next-up-grid{grid-template-columns:1fr!important}}
 @media(max-width:560px){.session-grid{grid-template-columns:1fr}}
 </style>
 @endpush
@@ -102,6 +102,72 @@
       </div>
     </div>
   </div>
+
+  {{-- Upcoming Sessions strip --}}
+  @if($nextSessions && $nextSessions->isNotEmpty())
+  <div style="margin-bottom:28px">
+    <div style="font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--forest);margin-bottom:12px;display:flex;align-items:center;gap:10px">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Upcoming Sessions
+    </div>
+    <div class="next-up-grid" style="display:grid;grid-template-columns:repeat({{ min(3,$nextSessions->count()) }},1fr);gap:14px">
+      @foreach($nextSessions as $ns)
+      @php
+        $nsConfirmed = $ns->confirmed_registrations_count ?? 0;
+        $nsFull      = $ns->max_participants > 0 && $nsConfirmed >= $ns->max_participants;
+        $nsDaysAway  = (int) now()->startOfDay()->diffInDays($ns->session_datetime->startOfDay(), false);
+        $nsRegClosed = $ns->registration_deadline && now()->gt($ns->registration_deadline);
+      @endphp
+      <div style="background:linear-gradient(135deg,#f0f7eb 0%,#e8f5e0 100%);border:1.5px solid #c6e2b4;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;right:0;width:60px;height:60px;background:rgba(51,106,41,.06);border-radius:0 14px 0 60px"></div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <div style="font-size:.82rem;font-weight:700;color:var(--dark);line-height:1.35;flex:1">{{ Str::limit($ns->title, 55) }}</div>
+          <div style="flex-shrink:0;text-align:center;background:#fff;border-radius:8px;padding:4px 8px;border:1px solid #c6e2b4;min-width:40px">
+            <div style="font-size:1.1rem;font-weight:800;color:var(--forest);line-height:1">{{ $ns->session_datetime->format('d') }}</div>
+            <div style="font-size:.58rem;font-weight:700;text-transform:uppercase;color:var(--forest);letter-spacing:.5px">{{ $ns->session_datetime->format('M') }}</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="font-size:.73rem;color:#4a7c3f;display:flex;align-items:center;gap:5px">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            {{ $ns->session_datetime->format('g:i A') }}
+            &nbsp;·&nbsp;
+            @if($nsDaysAway === 0) Today
+            @elseif($nsDaysAway === 1) Tomorrow
+            @else in {{ $nsDaysAway }} days
+            @endif
+          </div>
+          <div style="font-size:.73rem;color:#4a7c3f;display:flex;align-items:center;gap:5px">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            {{ Str::limit($ns->venue, 35) }}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:2px">
+          <div style="font-size:.82rem;font-weight:700;color:var(--dark)">
+            @if((float)$ns->fee === 0.0) <span style="color:var(--emerald)">Free</span>
+            @else ₱{{ number_format($ns->fee, 2) }}
+            @endif
+          </div>
+          @if($ns->status === 'coming_soon')
+            <span style="font-size:.68rem;font-weight:700;color:#854d0e;background:#fef9c3;border:1px solid #fde68a;border-radius:20px;padding:3px 9px">Coming Soon</span>
+          @elseif($nsFull || $nsRegClosed)
+            <span style="font-size:.68rem;font-weight:700;color:#6b7280;background:#f3f4f6;border:1px solid #d1d5db;border-radius:20px;padding:3px 9px">{{ $nsFull ? 'Full' : 'Reg. Closed' }}</span>
+          @elseif(Auth::check() && !($userEnrollments[$ns->id] ?? null))
+            <form method="POST" action="{{ route('workshops.enroll', $ns) }}">
+              @csrf
+              <button type="submit" style="font-size:.7rem;font-weight:700;color:#fff;background:var(--forest);border:none;border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;transition:all .2s">Enroll</button>
+            </form>
+          @elseif(!Auth::check())
+            <a href="{{ route('login') }}" style="font-size:.7rem;font-weight:700;color:var(--forest);background:#fff;border:1.5px solid var(--forest);border-radius:20px;padding:3px 11px;text-decoration:none">Login</a>
+          @else
+            <span style="font-size:.68rem;font-weight:700;color:var(--forest);background:#fff;border:1px solid #c6e2b4;border-radius:20px;padding:3px 9px">Enrolled</span>
+          @endif
+        </div>
+      </div>
+      @endforeach
+    </div>
+  </div>
+  @endif
 
   {{-- Tab nav --}}
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:0">

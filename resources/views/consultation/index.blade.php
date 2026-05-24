@@ -285,6 +285,53 @@
         </a>
       @endauth
     </div>
+
+    {{-- Available Slots Panel --}}
+    @if($upcomingSlots->isNotEmpty())
+    <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px;margin-top:16px;box-shadow:var(--sh-sm)">
+      <div style="font-size:.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--forest);margin-bottom:14px;display:flex;align-items:center;gap:7px">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Available Slots
+      </div>
+      <div style="font-size:.7rem;color:var(--gray);margin-bottom:12px">Next 14 days — click any slot to select it.</div>
+
+      @foreach($upcomingSlots->take(7) as $date => $slots)
+      @php $dateObj = \Carbon\Carbon::parse($date); @endphp
+      <div style="margin-bottom:12px">
+        <div style="font-size:.72rem;font-weight:700;color:var(--dark);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+          <span style="background:var(--sand);border-radius:6px;padding:2px 7px;font-size:.68rem;color:var(--forest)">{{ $dateObj->format('D') }}</span>
+          {{ $dateObj->format('M j') }}
+          @if($dateObj->isToday()) <span style="font-size:.62rem;color:var(--emerald);font-weight:600">Today</span>
+          @elseif($dateObj->isTomorrow()) <span style="font-size:.62rem;color:var(--emerald);font-weight:600">Tomorrow</span>
+          @endif
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">
+          @foreach($slots->take(4) as $slot)
+          <button type="button"
+            onclick="quickPickSlot('{{ $date }}', {{ $slot->id }}, '{{ $slot->time_range }}', '{{ $slot->type_label }}')"
+            style="font-size:.68rem;font-weight:600;color:var(--forest);background:#f0f7eb;border:1.5px solid #c6e2b4;border-radius:7px;padding:4px 8px;cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap"
+            onmouseover="this.style.background='var(--sand)';this.style.borderColor='var(--forest)'"
+            onmouseout="this.style.background='#f0f7eb';this.style.borderColor='#c6e2b4'">
+            {{ $slot->time_range }}
+          </button>
+          @endforeach
+          @if($slots->count() > 4)
+          <span style="font-size:.65rem;color:var(--gray);align-self:center">+{{ $slots->count()-4 }} more</span>
+          @endif
+        </div>
+      </div>
+      @endforeach
+
+      @if($upcomingSlots->count() > 7)
+      <div style="font-size:.7rem;color:var(--gray);text-align:center;margin-top:6px">Use the calendar to see all available dates.</div>
+      @endif
+    </div>
+    @else
+    <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px;margin-top:16px;box-shadow:var(--sh-sm);text-align:center">
+      <div style="font-size:.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin-bottom:10px">Available Slots</div>
+      <div style="font-size:.78rem;color:var(--gray)">No slots available in the next 14 days. Please check back soon.</div>
+    </div>
+    @endif
   </div>
 </div>
 @endsection
@@ -367,6 +414,47 @@ function changeMonth(dir){
   curMonth+=dir;
   if(curMonth<0){curMonth=11;curYear--;} if(curMonth>11){curMonth=0;curYear++;}
   renderCalendar();
+}
+
+function quickPickSlot(dateStr, slotId, timeRange, typeLabel){
+  const d = new Date(dateStr+'T00:00:00');
+  curYear = d.getFullYear(); curMonth = d.getMonth();
+  selectedDate = dateStr;
+  renderCalendar();
+  // Update summary date
+  document.getElementById('sumDate').textContent = d.toLocaleDateString('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('sumTime').innerHTML = '<span class="sum-empty">Not selected</span>';
+  document.getElementById('sumType').innerHTML = '<span class="sum-empty">—</span>';
+  // Load slots then auto-select
+  const lbl=document.getElementById('slotsLabel');
+  const con=document.getElementById('slotsContainer');
+  lbl.style.fontStyle='normal';
+  lbl.textContent='Available slots for '+d.toLocaleDateString('en-PH',{weekday:'short',month:'short',day:'numeric'})+':';
+  con.innerHTML='<div class="slots-msg">Loading slots...</div>';
+  fetch("{{ route('consultation.slots') }}?date="+dateStr,{headers:{'X-Requested-With':'XMLHttpRequest'}})
+  .then(r=>r.json())
+  .then(data=>{
+    if(!data.slots||data.slots.length===0){
+      con.innerHTML='<div class="slots-msg">No slots available for this date.</div>';
+      return;
+    }
+    con.innerHTML='<div class="slots-grid">'+
+      data.slots.map(s=>`
+        <button type="button" class="slot-btn${s.id===slotId?' selected':''}"
+          onclick="pickSlot(${s.id},'${s.time_range}','${s.type_label}',this)">
+          ${s.time_range}
+          <span class="slot-type">${s.type_label}</span>
+        </button>`).join('')+
+    '</div>';
+    // Auto-set the pre-selected slot
+    selectedSlot = slotId;
+    document.getElementById('scheduleId').value = slotId;
+    document.getElementById('sumTime').textContent = timeRange;
+    document.getElementById('sumType').textContent = typeLabel;
+    // Scroll to step card
+    document.querySelector('.step-card').scrollIntoView({behavior:'smooth',block:'start'});
+  })
+  .catch(()=>{ con.innerHTML='<div class="slots-msg">Could not load slots. Please try again.</div>'; });
 }
 
 function toggleCollab(){
