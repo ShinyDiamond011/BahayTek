@@ -173,7 +173,8 @@
       <p id="heroP">From biogas to solar to precision agriculture — BAHAYTEK delivers hands-on technology that transforms rural livelihoods in the Philippines.</p>
       <div class="hero-btns">
         <a href="{{ route('consultation.index') }}" class="btn-slide-primary">Book a Consultation</a>
-        <a href="{{ route('services') }}" class="btn-slide-ghost">Explore Services</a>
+        <a href="{{ route('shop.index') }}" class="btn-slide-ghost">Browse Products</a>
+        <a href="{{ route('workshops.index') }}" class="btn-slide-ghost">View Workshops</a>
       </div>
     </div>
 
