@@ -49,19 +49,7 @@ class WorkshopController extends Controller
                 ->all();
         }
 
-        $nextSessions = null;
-        if (!$showHistory && !$request->filled('search') && !$request->filled('status')) {
-            $nextSessions = TrainingSession::withCount([
-                'registrations as confirmed_registrations_count' => fn($q) => $q->where('registration_status', 'confirmed'),
-            ])
-            ->whereIn('status', ['open', 'coming_soon', 'ongoing'])
-            ->where('session_datetime', '>=', now())
-            ->orderBy('session_datetime')
-            ->limit(3)
-            ->get();
-        }
-
-        return view('workshops.index', compact('sessions', 'userEnrollments', 'showHistory', 'nextSessions'));
+        return view('workshops.index', compact('sessions', 'userEnrollments', 'showHistory'));
     }
 
     public function enroll(TrainingSession $session)

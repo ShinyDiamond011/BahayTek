@@ -13,15 +13,7 @@ class ConsultationController extends Controller
 {
     public function index()
     {
-        $upcomingSlots = Schedule::where('status', 'available')
-            ->where('date', '>', today())
-            ->where('date', '<=', today()->addDays(14))
-            ->orderBy('date')
-            ->orderBy('start_time')
-            ->get()
-            ->groupBy(fn($s) => $s->date->toDateString());
-
-        return view('consultation.index', compact('upcomingSlots'));
+        return view('consultation.index');
     }
 
     public function slots(Request $request)
