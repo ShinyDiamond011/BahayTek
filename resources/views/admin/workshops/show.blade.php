@@ -19,7 +19,17 @@
       default     => 'badge-warning',
     };
   @endphp
-  <span class="badge {{ $sc }}" style="font-size:.72rem;padding:5px 14px">{{ ucfirst(str_replace('_',' ',$session->status)) }}</span>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="badge {{ $sc }}" style="font-size:.72rem;padding:5px 14px">{{ ucfirst(str_replace('_',' ',$session->status)) }}</span>
+    <form method="POST" action="{{ route('admin.workshops.delete', $session) }}"
+          onsubmit="return confirm('Permanently delete this workshop and all its registrations? This cannot be undone.')">
+      @csrf @method('DELETE')
+      <button type="submit" class="btn btn-sm" style="background:#7f1d1d;color:#fff;border-color:#7f1d1d">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Delete
+      </button>
+    </form>
+  </div>
 </div>
 
 @if(session('success'))

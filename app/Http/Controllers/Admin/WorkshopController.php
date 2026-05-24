@@ -95,6 +95,13 @@ class WorkshopController extends Controller
         return redirect()->route('admin.workshops.index')->with('success', 'Workshop cancelled.');
     }
 
+    public function forceDelete(TrainingSession $session)
+    {
+        $session->registrations()->delete();
+        $session->delete();
+        return redirect()->route('admin.workshops.index')->with('success', 'Workshop permanently deleted.');
+    }
+
     public function attendance(Request $request)
     {
         // Sessions that are ongoing or completed — these are the ones that need attendance tracking

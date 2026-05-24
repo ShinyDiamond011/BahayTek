@@ -95,11 +95,15 @@
             <div style="display:flex;gap:6px">
               <a href="{{ route('admin.workshops.show', $session) }}" class="btn btn-secondary btn-sm">View</a>
               @if($session->status !== 'cancelled')
-              <form method="POST" action="{{ route('admin.workshops.destroy', $session) }}" onsubmit="return confirm('Cancel this workshop?')">
+              <form method="POST" action="{{ route('admin.workshops.destroy', $session) }}" onsubmit="return confirm('Cancel this workshop? Participants will no longer be able to enroll.')">
                 @csrf @method('DELETE')
                 <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
               </form>
               @endif
+              <form method="POST" action="{{ route('admin.workshops.delete', $session) }}" onsubmit="return confirm('Permanently delete \"{{ addslashes($session->title) }}\"? This cannot be undone and will remove all registrations.')">
+                @csrf @method('DELETE')
+                <button type="submit" class="btn btn-sm" style="background:#7f1d1d;color:#fff;border-color:#7f1d1d">Delete</button>
+              </form>
             </div>
           </td>
         </tr>

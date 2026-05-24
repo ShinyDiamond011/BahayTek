@@ -104,6 +104,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/workshops/{session}',                                        [AdminWorkshopController::class, 'show'])->name('workshops.show');
         Route::put('/workshops/{session}',                                        [AdminWorkshopController::class, 'update'])->name('workshops.update');
         Route::delete('/workshops/{session}',                                     [AdminWorkshopController::class, 'destroy'])->name('workshops.destroy');
+        Route::delete('/workshops/{session}/delete',                              [AdminWorkshopController::class, 'forceDelete'])->name('workshops.delete');
         Route::patch('/registrations/{registration}/status',                      [AdminWorkshopController::class, 'updateRegistration'])->name('registrations.status');
         Route::get('/attendance',                                                 [AdminWorkshopController::class, 'attendance'])->name('attendance.index');
         Route::patch('/attendance/{registration}',                                [AdminWorkshopController::class, 'markAttendance'])->name('attendance.mark');
