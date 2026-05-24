@@ -131,10 +131,10 @@ class WorkshopController extends Controller
 
     public function markAttendance(Request $request, TrainingRegistration $registration)
     {
-        $request->validate(['present' => 'required|in:1,0']);
+        $request->validate(['present' => 'required|boolean']);
 
         $registration->update([
-            'registration_status' => $request->present === '1' ? 'attended' : 'cancelled',
+            'registration_status' => $request->boolean('present') ? 'attended' : 'cancelled',
         ]);
 
         return back()->with('success', 'Attendance updated.');
