@@ -117,29 +117,67 @@
   </div>
 
   <!-- Sidebar: Update Status -->
+  @php
+    $orderTransitions = [
+      'pending'    => ['confirmed', 'cancelled'],
+      'confirmed'  => ['processing', 'cancelled'],
+      'processing' => ['shipped', 'cancelled'],
+      'shipped'    => ['delivered'],
+      'delivered'  => [],
+      'cancelled'  => [],
+    ];
+    $payTransitions = [
+      'unpaid'   => ['paid'],
+      'paid'     => ['refunded'],
+      'refunded' => [],
+    ];
+    $allowedOrderNext = $orderTransitions[$order->status] ?? [];
+    $allowedPayNext   = $payTransitions[$order->payment_status] ?? [];
+    $orderLocked      = empty($allowedOrderNext);
+    $payLocked        = empty($allowedPayNext);
+  @endphp
   <div>
     <div class="card">
       <div style="padding:15px 20px;border-bottom:1px solid var(--border);font-size:.85rem;font-weight:700;color:var(--dark)">Update Order</div>
+      @if($orderLocked && $payLocked)
+        <div style="padding:18px 20px;font-size:.8rem;color:var(--gray);text-align:center">
+          <div style="font-size:1.4rem;margin-bottom:8px">🔒</div>
+          This order is finalized and cannot be changed.
+        </div>
+      @else
       <form method="POST" action="{{ route('admin.orders.status', $order) }}" style="padding:18px 20px">
         @csrf @method('PATCH')
         <div style="margin-bottom:14px">
           <div style="font-size:.73rem;font-weight:700;color:var(--dark);margin-bottom:6px">Order Status</div>
-          <select class="form-control form-select" name="status" style="width:100%">
-            @foreach(['pending','confirmed','processing','shipped','delivered','cancelled'] as $s)
-            <option value="{{ $s }}" {{ $order->status === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
-            @endforeach
-          </select>
+          @if($orderLocked)
+            <input type="hidden" name="status" value="{{ $order->status }}">
+            <div class="badge {{ $sc }}" style="display:inline-block;font-size:.75rem;padding:5px 12px">{{ ucfirst($order->status) }} <span style="font-weight:400;opacity:.7">(final)</span></div>
+          @else
+            <select class="form-control form-select" name="status" style="width:100%">
+              <option value="{{ $order->status }}" selected>{{ ucfirst($order->status) }} (current)</option>
+              @foreach($allowedOrderNext as $s)
+              <option value="{{ $s }}">{{ ucfirst($s) }}</option>
+              @endforeach
+            </select>
+          @endif
         </div>
         <div style="margin-bottom:16px">
           <div style="font-size:.73rem;font-weight:700;color:var(--dark);margin-bottom:6px">Payment Status</div>
-          <select class="form-control form-select" name="payment_status" style="width:100%">
-            @foreach(['unpaid','paid','refunded'] as $ps)
-            <option value="{{ $ps }}" {{ $order->payment_status === $ps ? 'selected' : '' }}>{{ ucfirst($ps) }}</option>
-            @endforeach
-          </select>
+          @if($payLocked)
+            <input type="hidden" name="payment_status" value="{{ $order->payment_status }}">
+            <div class="badge {{ $pc }}" style="display:inline-block;font-size:.75rem;padding:5px 12px">{{ ucfirst($order->payment_status) }} <span style="font-weight:400;opacity:.7">(final)</span></div>
+          @else
+            <select class="form-control form-select" name="payment_status" style="width:100%">
+              <option value="{{ $order->payment_status }}" selected>{{ ucfirst($order->payment_status) }} (current)</option>
+              @foreach($allowedPayNext as $ps)
+              <option value="{{ $ps }}">{{ ucfirst($ps) }}</option>
+              @endforeach
+            </select>
+          @endif
         </div>
         <button type="submit" class="btn btn-primary" style="width:100%">Update</button>
       </form>
+      @endif
     </div>
 
     <div class="card" style="margin-top:16px">

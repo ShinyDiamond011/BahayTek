@@ -126,17 +126,35 @@
   </div>
 
   <!-- RIGHT: Actions -->
+  @php
+    $bookingTransitions = [
+      'pending'   => ['confirmed', 'declined'],
+      'confirmed' => ['completed', 'declined'],
+      'declined'  => [],
+      'completed' => [],
+      'cancelled' => [],
+    ];
+    $allowedNext    = $bookingTransitions[$booking->status] ?? [];
+    $bookingLocked  = empty($allowedNext);
+  @endphp
   <div>
     <div class="card">
       <div class="card-header"><div class="card-title">Update Status</div></div>
       <div class="card-body">
+        @if($bookingLocked)
+          <div style="text-align:center;padding:12px 0">
+            <div style="font-size:1.4rem;margin-bottom:8px">🔒</div>
+            <div style="font-size:.8rem;color:var(--gray)">This booking is <strong>{{ ucfirst($booking->status) }}</strong> and cannot be changed.</div>
+          </div>
+        @else
         <form method="POST" action="{{ route('admin.bookings.status', $booking) }}">
           @csrf @method('PATCH')
           <div style="margin-bottom:12px">
             <label style="font-size:.74rem;font-weight:600;color:var(--charcoal);display:block;margin-bottom:5px">Status</label>
             <select name="status" class="form-select" style="width:100%">
-              @foreach(['pending','confirmed','declined','completed'] as $s)
-              <option value="{{ $s }}" {{ $booking->status===$s?'selected':'' }}>{{ ucfirst($s) }}</option>
+              <option value="{{ $booking->status }}" selected>{{ ucfirst($booking->status) }} (current)</option>
+              @foreach($allowedNext as $s)
+              <option value="{{ $s }}">{{ ucfirst($s) }}</option>
               @endforeach
             </select>
           </div>
@@ -146,6 +164,7 @@
           </div>
           <button type="submit" class="btn btn-primary" style="width:100%">Save Changes</button>
         </form>
+        @endif
       </div>
     </div>
 

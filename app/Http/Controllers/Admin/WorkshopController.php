@@ -69,6 +69,10 @@ class WorkshopController extends Controller
 
     public function update(Request $request, TrainingSession $session)
     {
+        if (in_array($session->status, ['completed', 'cancelled'])) {
+            return back()->with('error', 'A completed or cancelled workshop cannot be edited.');
+        }
+
         $validated = $request->validate([
             'title'                 => 'required|string|max:255',
             'description'           => 'nullable|string',
@@ -133,12 +137,21 @@ class WorkshopController extends Controller
     {
         $request->validate(['registration_status' => 'required|in:pending,confirmed,cancelled,attended']);
 
-        // Once confirmed, status can only move forward (confirmed → attended/cancelled), not back to pending
-        if ($registration->registration_status === 'confirmed' && $request->registration_status === 'pending') {
-            return back()->with('error', 'A confirmed enrollment cannot be reverted to pending.');
+        $regTransitions = [
+            'pending'   => ['confirmed'],
+            'confirmed' => ['attended'],
+            'attended'  => [],
+            'cancelled' => [],
+        ];
+
+        $newStatus = $request->registration_status;
+        if ($newStatus !== $registration->registration_status) {
+            if (!in_array($newStatus, $regTransitions[$registration->registration_status] ?? [])) {
+                return back()->with('error', 'Invalid registration status transition.');
+            }
         }
 
-        $registration->update(['registration_status' => $request->registration_status]);
+        $registration->update(['registration_status' => $newStatus]);
         return back()->with('success', 'Registration updated.');
     }
 }

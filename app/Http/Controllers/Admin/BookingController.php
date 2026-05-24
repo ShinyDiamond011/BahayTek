@@ -60,13 +60,27 @@ class BookingController extends Controller
             'admin_notes' => 'nullable|string|max:1000',
         ]);
 
+        $bookingTransitions = [
+            'pending'   => ['confirmed', 'declined'],
+            'confirmed' => ['completed', 'declined'],
+            'declined'  => [],
+            'completed' => [],
+            'cancelled' => [],
+        ];
+
+        $newStatus = $request->status;
+        if ($newStatus !== $booking->status) {
+            if (!in_array($newStatus, $bookingTransitions[$booking->status] ?? [])) {
+                return back()->with('error', 'Invalid status transition. Booking status cannot be reversed or re-opened.');
+            }
+        }
+
         $booking->update([
-            'status'      => $request->status,
+            'status'      => $newStatus,
             'admin_notes' => $request->admin_notes,
         ]);
 
-        // If declined or completed, free the schedule slot
-        if (in_array($request->status, ['declined'])) {
+        if ($newStatus === 'declined') {
             $booking->schedule?->update(['status' => 'available']);
         }
 

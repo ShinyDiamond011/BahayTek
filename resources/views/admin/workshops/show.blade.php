@@ -55,6 +55,13 @@
     <!-- Edit form -->
     <div class="card" style="margin-bottom:18px">
       <div style="padding:15px 20px;border-bottom:1px solid var(--border);font-size:.85rem;font-weight:700;color:var(--dark)">Edit Workshop</div>
+      @if(in_array($session->status, ['completed', 'cancelled']))
+        <div style="padding:20px;text-align:center">
+          <div style="font-size:1.6rem;margin-bottom:8px">🔒</div>
+          <div style="font-size:.85rem;font-weight:600;color:var(--dark);margin-bottom:4px">Workshop is {{ ucfirst($session->status) }}</div>
+          <div style="font-size:.78rem;color:var(--gray)">Completed and cancelled workshops cannot be edited.</div>
+        </div>
+      @else
       <form method="POST" action="{{ route('admin.workshops.update', $session) }}" style="padding:20px">
         @csrf @method('PUT')
         <div style="margin-bottom:14px">
@@ -92,9 +99,18 @@
           </div>
           <div>
             <label style="font-size:.73rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">Status</label>
+            @php
+              $wsTransitions = [
+                'coming_soon' => ['open', 'ongoing', 'cancelled'],
+                'open'        => ['coming_soon', 'ongoing', 'cancelled'],
+                'ongoing'     => ['completed', 'cancelled'],
+              ];
+              $allowedWsNext = $wsTransitions[$session->status] ?? [];
+            @endphp
             <select class="form-control form-select" name="status">
-              @foreach(['open','coming_soon','ongoing','completed','cancelled'] as $s)
-              <option value="{{ $s }}" {{ $session->status === $s ? 'selected' : '' }}>{{ ucfirst(str_replace('_',' ',$s)) }}</option>
+              <option value="{{ $session->status }}" selected>{{ ucfirst(str_replace('_',' ',$session->status)) }} (current)</option>
+              @foreach($allowedWsNext as $s)
+              <option value="{{ $s }}">{{ ucfirst(str_replace('_',' ',$s)) }}</option>
               @endforeach
             </select>
           </div>
@@ -103,6 +119,7 @@
           <button type="submit" class="btn btn-primary">Save Changes</button>
         </div>
       </form>
+      @endif
     </div>
 
     <!-- Registrations -->

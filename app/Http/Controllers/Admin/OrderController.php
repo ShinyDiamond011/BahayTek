@@ -58,9 +58,38 @@ class OrderController extends Controller
             'payment_status' => 'nullable|in:unpaid,paid,refunded',
         ]);
 
-        $data = ['status' => $request->status];
+        $orderTransitions = [
+            'pending'    => ['confirmed', 'cancelled'],
+            'confirmed'  => ['processing', 'cancelled'],
+            'processing' => ['shipped', 'cancelled'],
+            'shipped'    => ['delivered'],
+            'delivered'  => [],
+            'cancelled'  => [],
+        ];
+
+        $payTransitions = [
+            'unpaid'   => ['paid'],
+            'paid'     => ['refunded'],
+            'refunded' => [],
+        ];
+
+        $newStatus = $request->status;
+        if ($newStatus !== $order->status) {
+            if (!in_array($newStatus, $orderTransitions[$order->status] ?? [])) {
+                return back()->with('error', 'Invalid status transition. Order status can only move forward.');
+            }
+        }
+
+        $data = ['status' => $newStatus];
+
         if ($request->filled('payment_status')) {
-            $data['payment_status'] = $request->payment_status;
+            $newPayStatus = $request->payment_status;
+            if ($newPayStatus !== $order->payment_status) {
+                if (!in_array($newPayStatus, $payTransitions[$order->payment_status] ?? [])) {
+                    return back()->with('error', 'Invalid payment status transition. Payment status cannot be reversed.');
+                }
+            }
+            $data['payment_status'] = $newPayStatus;
         }
 
         $order->update($data);
