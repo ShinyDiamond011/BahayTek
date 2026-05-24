@@ -137,25 +137,30 @@
               <td style="font-size:.75rem;color:var(--gray)">{{ $reg->registered_at?->format('M j, Y') }}</td>
               <td><span class="badge {{ $rc }}">{{ ucfirst($reg->registration_status) }}</span></td>
               <td>
-                @if($reg->registration_status === 'confirmed')
-                  {{-- Confirmed: can only move to attended or cancelled, cannot revert to pending --}}
-                  <form method="POST" action="{{ route('admin.registrations.status', $reg) }}" style="display:inline-flex;gap:4px">
-                    @csrf @method('PATCH')
-                    <select name="registration_status" class="form-control form-select" style="padding:4px 8px;font-size:.73rem;width:auto;height:auto" onchange="this.form.submit()">
-                      <option value="confirmed" selected>Confirmed</option>
-                      <option value="attended">Attended</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
-                  </form>
-                @elseif(in_array($reg->registration_status, ['attended', 'cancelled']))
+                @if(in_array($reg->registration_status, ['attended', 'cancelled']))
+                  {{-- Terminal states: show static badge --}}
                   <span class="badge {{ $rc }}" style="font-size:.68rem">{{ ucfirst($reg->registration_status) }}</span>
+                @elseif($reg->registration_status === 'confirmed')
+                  @if($session->session_datetime->isFuture())
+                    {{-- Session hasn't happened yet: lock confirmed status, no changes allowed --}}
+                    <span class="badge badge-success" style="font-size:.68rem" title="Cannot change status before the session date">Confirmed</span>
+                  @else
+                    {{-- Session has passed: admin can mark attendance only --}}
+                    <form method="POST" action="{{ route('admin.registrations.status', $reg) }}" style="display:inline-flex;gap:4px">
+                      @csrf @method('PATCH')
+                      <select name="registration_status" class="form-control form-select" style="padding:4px 8px;font-size:.73rem;width:auto;height:auto" onchange="this.form.submit()">
+                        <option value="confirmed" selected>Confirmed</option>
+                        <option value="attended">Attended</option>
+                      </select>
+                    </form>
+                  @endif
                 @else
+                  {{-- Pending: can only confirm, cannot cancel from admin --}}
                   <form method="POST" action="{{ route('admin.registrations.status', $reg) }}" style="display:inline-flex;gap:4px">
                     @csrf @method('PATCH')
                     <select name="registration_status" class="form-control form-select" style="padding:4px 8px;font-size:.73rem;width:auto;height:auto" onchange="this.form.submit()">
-                      <option value="pending" {{ $reg->registration_status === 'pending' ? 'selected' : '' }}>Pending</option>
-                      <option value="confirmed" {{ $reg->registration_status === 'confirmed' ? 'selected' : '' }}>Confirmed</option>
-                      <option value="cancelled" {{ $reg->registration_status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                      <option value="pending" selected>Pending</option>
+                      <option value="confirmed">Confirmed</option>
                     </select>
                   </form>
                 @endif

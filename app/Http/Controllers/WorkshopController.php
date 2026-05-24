@@ -25,20 +25,16 @@ class WorkshopController extends Controller
         }
 
         if ($showHistory) {
-            // History: session date has passed OR status is completed/cancelled
-            $baseQuery->where(function ($q) {
-                $q->where('session_datetime', '<', now())
-                  ->orWhereIn('status', ['completed', 'cancelled']);
-            })->orderByDesc('session_datetime');
+            // History: purely date-based — any session whose date has already passed
+            $baseQuery->where('session_datetime', '<', now())
+                      ->orderByDesc('session_datetime');
         } elseif ($request->filled('status')) {
             $baseQuery->where('status', $request->status)
                       ->where('session_datetime', '>=', now())
-                      ->whereNotIn('status', ['completed', 'cancelled'])
                       ->orderBy('session_datetime');
         } else {
-            // Active: future date AND not completed/cancelled
+            // Active: all upcoming sessions (including admin-cancelled ones)
             $baseQuery->where('session_datetime', '>=', now())
-                      ->whereNotIn('status', ['completed', 'cancelled'])
                       ->orderBy('session_datetime');
         }
 

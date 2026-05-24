@@ -112,8 +112,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--dark);
   </a>
   <div class="nav-links">
     <a href="{{ route('home') }}">Home</a>
-    <a href="{{ route('services') }}">Services</a>
-    <a href="{{ route('about') }}">About</a>
     <a href="{{ route('shop.index') }}">Shop</a>
     <a href="{{ route('workshops.index') }}">Workshops</a>
     <a href="{{ route('consultation.index') }}">Consultation</a>

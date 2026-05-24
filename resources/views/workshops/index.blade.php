@@ -225,7 +225,7 @@
                 @endif
               </div>
               <form method="POST" action="{{ route('workshops.cancel', $userRegId) }}"
-                onsubmit="return confirm('Cancel your enrollment for this workshop?')">
+                onsubmit="return confirm('Cancel enrollment?\n\nWarning: Once cancelled, you will NOT be able to re-enroll in this workshop.')">
                 @csrf
                 @method('PATCH')
                 <button type="submit" style="padding:10px 14px;border-radius:10px;background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;font-size:.78rem;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;height:100%">

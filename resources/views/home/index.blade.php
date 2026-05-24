@@ -294,36 +294,31 @@
   <h2 class="section-heading">Learn <em>Sustainable Technology</em></h2>
   <p class="section-sub">Hands-on workshops open to farmers, entrepreneurs, and community leaders. Earn certifications and gain practical skills.</p>
   <div class="preview-grid">
-    <div class="workshop-card reveal rd1">
+    @forelse($featuredWorkshops as $ws)
+    @php $wBadgeClass = $ws->status === 'coming_soon' ? 'badge-soon' : 'badge-open'; @endphp
+    <div class="workshop-card reveal rd{{ $loop->iteration }}">
       <div class="wc-top">
-        <div class="wc-icon" style="background:rgba(128,177,85,.12)">☀️</div>
-        <span class="wc-badge badge-open">Open</span>
+        <div class="wc-icon" style="background:rgba(128,177,85,.12)">🎓</div>
+        <span class="wc-badge {{ $wBadgeClass }}">{{ ucfirst(str_replace('_',' ',$ws->status)) }}</span>
       </div>
       <div class="wc-body">
-        <div class="wc-title">Solar Panel Installation & Maintenance</div>
-        <p class="wc-desc">Learn to install, wire, and maintain residential and small commercial solar PV systems.</p>
+        <div class="wc-title">{{ $ws->title }}</div>
+        @if($ws->description)
+          <p class="wc-desc">{{ Str::limit($ws->description, 110) }}</p>
+        @endif
+        <div style="font-size:.72rem;color:var(--gray);margin-top:8px;display:flex;align-items:center;gap:5px">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          {{ $ws->session_datetime->format('M j, Y · g:i A') }}
+        </div>
       </div>
     </div>
-    <div class="workshop-card reveal rd2">
-      <div class="wc-top">
-        <div class="wc-icon" style="background:rgba(182,138,59,.12)">🔥</div>
-        <span class="wc-badge badge-open">Open</span>
-      </div>
-      <div class="wc-body">
-        <div class="wc-title">Biogas Digester Construction</div>
-        <p class="wc-desc">Build and operate biogas digesters using agricultural waste for clean household energy.</p>
+    @empty
+    <div class="workshop-card reveal rd1" style="grid-column:1/-1">
+      <div class="wc-body" style="text-align:center;padding:40px 24px;color:var(--gray);font-size:.85rem">
+        No upcoming workshops at the moment — check back soon!
       </div>
     </div>
-    <div class="workshop-card reveal rd3">
-      <div class="wc-top">
-        <div class="wc-icon" style="background:rgba(29,78,216,.1)">💧</div>
-        <span class="wc-badge badge-soon">Coming Soon</span>
-      </div>
-      <div class="wc-body">
-        <div class="wc-title">Rainwater Harvesting Systems</div>
-        <p class="wc-desc">Design and install gravity-fed water collection and distribution systems for farms.</p>
-      </div>
-    </div>
+    @endforelse
   </div>
   <div class="preview-cta">
     <a href="{{ route('workshops.index') }}" class="btn-view-all">View All Workshops</a>
@@ -336,30 +331,24 @@
   <h2 class="section-heading">Sustainable Tech, <em>Ready to Deploy</em></h2>
   <p class="section-sub">Shop our range of BAHAYTEK-developed technology products — from solar kits to biogas accessories to smart irrigation tools.</p>
   <div class="preview-grid">
-    <div class="product-card reveal rd1">
-      <div class="product-img">☀️</div>
+    @forelse($featuredProducts as $prod)
+    <a href="{{ route('shop.product', $prod) }}" class="product-card reveal rd{{ $loop->iteration }}" style="text-decoration:none;color:inherit">
+      @if($prod->image_url)
+        <img src="{{ $prod->image_url }}" alt="{{ $prod->prod_name }}" class="product-img" style="height:148px;width:100%;object-fit:cover">
+      @else
+        <div class="product-img">🛒</div>
+      @endif
       <div class="product-body">
-        <div class="product-category">Solar Energy</div>
-        <div class="product-name">100W Solar Panel Kit</div>
-        <div class="product-price">₱4,500</div>
+        <div class="product-category">{{ $prod->category }}</div>
+        <div class="product-name">{{ $prod->prod_name }}</div>
+        <div class="product-price">₱{{ number_format($prod->price, 2) }}</div>
       </div>
+    </a>
+    @empty
+    <div style="grid-column:1/-1;text-align:center;padding:40px 24px;color:var(--gray);font-size:.85rem">
+      No products available yet — check back soon!
     </div>
-    <div class="product-card reveal rd2">
-      <div class="product-img">🔥</div>
-      <div class="product-body">
-        <div class="product-category">Biogas</div>
-        <div class="product-name">Biogas Burner Stove</div>
-        <div class="product-price">₱1,200</div>
-      </div>
-    </div>
-    <div class="product-card reveal rd3">
-      <div class="product-img">💧</div>
-      <div class="product-body">
-        <div class="product-category">Water Systems</div>
-        <div class="product-name">Drip Irrigation Starter Kit</div>
-        <div class="product-price">₱2,800</div>
-      </div>
-    </div>
+    @endforelse
   </div>
   <div class="preview-cta">
     <a href="{{ route('shop.index') }}" class="btn-view-all">Shop All Products</a>
