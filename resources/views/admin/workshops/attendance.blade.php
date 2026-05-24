@@ -66,9 +66,14 @@
             @forelse($registrations as $i => $reg)
             @php
               $rc = match($reg->registration_status){
-                'attended'  => 'badge-info',
+                'attended'  => 'badge-success',
                 'cancelled' => 'badge-danger',
                 default     => 'badge-warning',
+              };
+              $statusLabel = match($reg->registration_status){
+                'attended'  => 'Present',
+                'cancelled' => 'Absent',
+                default     => ucfirst($reg->registration_status),
               };
             @endphp
             <tr>
@@ -78,14 +83,14 @@
               </td>
               <td style="font-size:.78rem;color:var(--gray)">{{ $reg->user?->email }}</td>
               <td style="font-size:.78rem;color:var(--gray)">{{ $reg->user?->phone ?? '—' }}</td>
-              <td><span class="badge {{ $rc }}">{{ ucfirst($reg->registration_status) }}</span></td>
+              <td><span class="badge {{ $rc }}">{{ $statusLabel }}</span></td>
               <td>
-                @if($reg->registration_status !== 'cancelled')
+                @if($reg->registration_status === 'confirmed')
                 <div style="display:flex;gap:6px">
                   <form method="POST" action="{{ route('admin.attendance.mark', $reg) }}">
                     @csrf @method('PATCH')
                     <input type="hidden" name="present" value="1">
-                    <button type="submit" class="btn btn-sm {{ $reg->registration_status === 'attended' ? 'btn-primary' : 'btn-secondary' }}" style="font-size:.72rem">
+                    <button type="submit" class="btn btn-sm btn-primary" style="font-size:.72rem">
                       ✓ Present
                     </button>
                   </form>
@@ -97,8 +102,16 @@
                     </button>
                   </form>
                 </div>
+                @elseif($reg->registration_status === 'attended')
+                <div style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;background:#dcfce7;border:1px solid #86efac">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span style="font-size:.72rem;font-weight:700;color:#166534">Present</span>
+                </div>
                 @else
-                <span style="font-size:.75rem;color:var(--gray)">Cancelled</span>
+                <div style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;background:#fee2e2;border:1px solid #fca5a5">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#991b1b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  <span style="font-size:.72rem;font-weight:700;color:#991b1b">Absent</span>
+                </div>
                 @endif
               </td>
             </tr>
